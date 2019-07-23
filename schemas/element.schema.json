@@ -1,0 +1,233 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://hypar.io/schemas/element.schema.json",
+    "title": "Element",
+    "description": "The base type for all elements.",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "id": {
+            "type": "string",
+            "description": "The unique identifier of the element."
+        },
+        "name": {
+            "type": "string",
+            "description": "A human readable name for the element."
+        },
+        "components": {
+            "type": "object",
+            "description": "A collection of components which define the element.",
+            "patternProperties": {
+                "^.*$": {
+                    "anyOf": [
+                      {"$ref": "#/definitions/propertySet"},
+                      {"$ref": "#/definitions/extrude"},
+                      {"$ref": "#/definitions/sweep"},
+                      {"$ref": "#/definitions/transform"}
+                    ]
+                }
+            }
+        }
+    },
+    "required": ["id", "components"],
+    "additionalProperties": false,
+    "definitions": {
+        "numericProperty": {
+            "type": "object",
+            "description": "A property with a numeric value. Property values are assumed to be SI.",
+            "properties": {
+                "valueType": {
+                    "type": "string",
+                    "enum": ["length","angle","temperature","mass","force","time","double","integer"]
+                },
+                "value": {
+                    "type": "number"
+                }
+            },
+            "required": ["valueType","value"],
+            "additionalProperties": false
+        },
+        "stringProperty": {
+            "type": "object",
+            "description": "A property with a string value.",
+            "properties": {
+                "valueType": {
+                    "type": "string",
+                    "enum": ["date","text"]
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": ["valueType", "value"],
+            "additionalProperties": false
+        },
+        "vector": {
+            "type": "object",
+            "title": "Vector",
+            "description": "A vector.",
+            "properties": {
+                "coordinates": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 3
+                }
+            },
+            "required": ["coordinates"],
+            "additionalProperties": false
+        },
+        "polygon": {
+            "type": "object",
+            "title": "Polygon",
+            "description": "A polygon.",
+            "properties": {
+                "vertices": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 6
+                }
+            },
+            "required": ["vertices"],
+            "additionalProperties": false
+        },
+        "line": {
+            "type": "object",
+            "title": "Line",
+            "description": "A line.",
+            "properties": {
+                "vertices": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 6,
+                    "maxItems": 6
+                }
+            },
+            "required": ["vertices"],
+            "additionalProperties": false
+        },
+        "profile": {
+            "type": "object",
+            "description": "A profile defined by a perimeter and zero or more holes.",
+            "properties": {
+                "perimeter": {
+                    "$ref": "#/definitions/polygon"
+                },
+                "voids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/polygon"
+                    }
+                }
+            },
+            "required": ["perimeter"],
+            "additionalProperties": false
+        },
+        "color": {
+            "type": "object",
+            "description": "A color described as red, green, blue, and alpha components (RGBA).",
+            "properties": {
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "type":"number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                }
+            }
+        },
+        "material": {
+            "type": "object",
+            "description": "A material described using the physically based rendering (PBR) method.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the material."
+                },
+                "baseColorFactor": {"$ref": "#/definitions/color"},
+                "metallicFactor": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "roughnessFactor": {
+                    "type":"number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                }
+            },
+            "required": ["name", "baseColorFactor","metallicFactor", "roughnessFactor"],
+            "additionalProperties": false
+        },
+        "propertySet": {
+            "type": "object",
+            "title": "PropertySet",
+            "description": "A set of properties.",
+            "patternProperties": {  
+                "^.*$": {
+                    "anyOf": [
+                        {"$ref": "#/definitions/numericProperty"},
+                        {"$ref": "#/definitions/stringProperty"}
+                    ]
+                }
+            }
+        },
+        "sweep": {
+            "type": "object",
+            "title": "Sweep",
+            "description": "A sweep defined by a profile and a path.",
+            "properties": {
+                "profile": {
+                    "$ref": "#/definitions/polygon"
+                },
+                "path": {
+                    "oneOf": [
+                        {"$ref": "#/definitions/line"},
+                        {"$ref": "#/definitions/polygon"}
+                    ]
+                }
+            },
+            "required":["profile","path"],
+            "additionalProperties": false
+        },
+        "extrude": {
+            "type": "object",
+            "title": "Extrude",
+            "description": "An extrusion defined by a profile and a depth.",
+            "properties": {
+                "profile": {"$ref": "#/definitions/profile"},
+                "direction": {"$ref": "#/definitions/vector"},
+                "depth": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            },
+            "required":["profile","direction","depth"],
+            "additionalProperties": false
+        },
+        "transform": {
+            "type": "object",
+            "title": "Transform",
+            "description": "A coordinate system defined by a column-ordered 4x4 matrix.",
+            "properties": {
+                "matrix": {
+                    "type": "array",
+                    "items": {"type":"number"},
+                    "minItems": 16,
+                    "maxItems": 16
+                }
+            },
+            "required": ["matrix"],
+            "additionalProperties": false
+        }
+    }
+}
