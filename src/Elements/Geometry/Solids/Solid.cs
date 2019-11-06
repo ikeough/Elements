@@ -24,26 +24,26 @@ namespace Elements.Geometry.Solids
         /// <summary>
         /// The Faces of the Solid.
         /// </summary>
-        public Dictionary<long, Face> Faces { get; }
+        public List<Face> Faces { get; }
 
         /// <summary>
         /// The edges of the solid.
         /// </summary>
-        public Dictionary<long, Edge> Edges { get; }
+        public List<Edge> Edges { get; }
 
         /// <summary>
         /// The vertices of the solid.
         /// </summary>
-        public Dictionary<long, Vertex> Vertices { get; }
+        public List<Vertex> Vertices { get; }
 
         /// <summary>
         /// Construct a solid.
         /// </summary>
         public Solid()
         {
-            this.Faces = new Dictionary<long, Face>();
-            this.Edges = new Dictionary<long, Edge>();
-            this.Vertices = new Dictionary<long, Vertex>();
+            this.Faces = new List<Face>();
+            this.Edges = new List<Edge>();
+            this.Vertices = new List<Vertex>();
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace Elements.Geometry.Solids
 
                 if(holes != null)
                 {
-                    for(var i=0; i<cap.Inner.Length; i++)
+                    for(var i=0; i<cap.Inner.Count; i++)
                     {
                         openEdge = cap.Inner[i].GetLinkedEdges();
 
@@ -216,10 +216,10 @@ namespace Elements.Geometry.Solids
 
             if(holes != null)
             {
-                var fEndInner = new Loop[holes.Count];
-                for(var i=0; i<holes.Count; i++)
+                var fEndInner = new List<Loop>(holes.Count);
+                foreach(var startInner in fStart.Inner)
                 {
-                    fEndInner[i] = solid.SweepLoop(fStart.Inner[i], direction, distance);
+                    fEndInner.Add(solid.SweepLoop(startInner, direction, distance));
                 }
                 solid.AddFace(fEndOuter, fEndInner);
             }
@@ -239,7 +239,7 @@ namespace Elements.Geometry.Solids
         public Vertex AddVertex(Vector3 position)
         {
             var v = new Vertex(_vertexId, position);
-            this.Vertices.Add(_vertexId, v);
+            this.Vertices.Add(v);
             _vertexId++;
             return v;
         }
@@ -253,14 +253,14 @@ namespace Elements.Geometry.Solids
         public Face AddFace(Polygon outer, IList<Polygon> inner = null)
         {
             var outerLoop = LoopFromPolygon(outer);
-            Loop[] innerLoops = null;
+            List<Loop> innerLoops = null;
 
             if(inner != null)
             {
-                innerLoops = new Loop[inner.Count];
-                for(var i=0; i<inner.Count; i++)
+                innerLoops = new List<Loop>(inner.Count);
+                foreach(var innerLoop in inner)
                 {
-                    innerLoops[i] = LoopFromPolygon(inner[i]);
+                    innerLoops.Add(LoopFromPolygon(innerLoop));
                 }
             }
             
@@ -277,7 +277,23 @@ namespace Elements.Geometry.Solids
         public Edge AddEdge(Vertex from, Vertex to)
         {
             var e = new Edge(_edgeId, from, to);
-            this.Edges.Add(_edgeId, e);
+            this.Edges.Add(e);
+            _edgeId++;
+            return e;
+        }
+        
+        /// <summary>
+        /// Add an edge to the solid after the provided edge.
+        /// </summary>
+        /// <param name="from">The start vertex.</param>
+        /// <param name="to">The end vertex.</param>
+        /// <param name="after">The edge after which to add this edge.</param>
+        /// <returns></returns>
+        public Edge AddEdgeAfter(Vertex from, Vertex to, Edge after)
+        {
+            var i = this.Edges.IndexOf(after);
+            var e = new Edge(_edgeId, from, to);
+            this.Edges.Insert(i+1, e);
             _edgeId++;
             return e;
         }
@@ -290,10 +306,10 @@ namespace Elements.Geometry.Solids
         /// <param name="outer">The outer Loop of the Face.</param>
         /// <param name="inner">The inner Loops of the Face.</param>
         /// <returns>The newly added Face.</returns>
-        public Face AddFace(Loop outer, Loop[] inner = null)
+        public Face AddFace(Loop outer, List<Loop> inner = null)
         {
             var f = new Face(_faceId, outer, inner);
-            this.Faces.Add(_faceId, f);
+            this.Faces.Add(f);
             _faceId++;
             return f;
         }
@@ -321,13 +337,15 @@ namespace Elements.Geometry.Solids
         /// Slice a solid with the provided plane.
         /// </summary>
         /// <param name="p">The plane to be used to slice this solid.</param>
-        internal void Slice(Plane p)
+        public void Slice(Plane p)
         {
-            var keys = new List<long>(this.Edges.Keys);
-            foreach(var key in keys)
+            // Slicing will add faces to the array
+            // so we create a temporary array of the
+            // original faces.
+            var toSlice = this.Faces.ToArray();
+            foreach(var f in toSlice)
             {
-                var e = this.Edges[key];
-                SplitEdge(p, e);
+                SplitFace(f, p);
             }
         }
 
@@ -342,7 +360,7 @@ namespace Elements.Geometry.Solids
             {
                 sb.AppendLine($"Edge: {e.ToString()}");
             }
-            foreach(var f in Faces.Values)
+            foreach(var f in Faces)
             {
                 sb.AppendLine($"Face: {f.ToString()}");
             }
@@ -355,7 +373,7 @@ namespace Elements.Geometry.Solids
         /// <param name="mesh">The mesh to which the solid's tessellated data will be added.</param>
         public void Tessellate(ref Mesh mesh)
         {
-            foreach (var f in this.Faces.Values)
+            foreach (var f in this.Faces)
             {
                 var tess = new Tess();
                 tess.NoEmptyPolygons = true;
@@ -398,7 +416,7 @@ namespace Elements.Geometry.Solids
             var tessellations = new Tess[this.Faces.Count];
 
             var fi = 0;
-            foreach (var f in this.Faces.Values)
+            foreach (var f in this.Faces)
             {
                 var tess = new Tess();
                 tess.NoEmptyPolygons = true;
@@ -536,7 +554,7 @@ namespace Elements.Geometry.Solids
                 }
             }
 
-            var inner = new Loop[edges.Length - 1];
+            var inner = new List<Loop>(edges.Length - 1);
             for(var i=1; i<edges.Length; i++)
             {
                 inner[i-1] = new Loop();
@@ -573,24 +591,24 @@ namespace Elements.Geometry.Solids
             return loop;
         }
 
-        internal Face AddFace(long id, Loop outer, Loop[] inner = null)
+        internal Face AddFace(long id, Loop outer, List<Loop> inner = null)
         {
             var f = new Face(id, outer, inner);
-            this.Faces.Add(id, f);
+            this.Faces.Add(f);
             return f;
         }
 
         internal Vertex AddVertex(long id, Vector3 position)
         {
             var v = new Vertex(id, position);
-            this.Vertices.Add(id, v);
+            this.Vertices.Add(v);
             return v;
         }
 
         internal Edge AddEdge(long id)
         {
             var e = new Edge(id);
-            this.Edges.Add(id, e);
+            this.Edges.Add(e);
             return e;
         }
     
@@ -630,6 +648,131 @@ namespace Elements.Geometry.Solids
                 j++;
             }
             return openLoop;
+        }
+
+        internal void SplitFace(Face f, Plane p)
+        {   
+            // Don't split if the split plane is parallel to the face
+            if(f.Plane().Normal.IsParallelTo(p.Normal))
+            {
+                return;
+            }
+
+            // Don't split if the split plane is directly along an edge.
+            foreach(var e in f.Outer.Edges)
+            {   
+                var d = (e.Edge.Right.Vertex.Point - e.Edge.Left.Vertex.Point).Normalized().Dot(p.Normal);
+                if(Math.Abs(e.Edge.Right.Vertex.Point.DistanceTo(p)) < Vector3.Tolerance &&
+                    Math.Abs(e.Edge.Left.Vertex.Point.DistanceTo(p)) < Vector3.Tolerance)
+                {
+                    return;
+                }
+            }
+
+            // The vector along which intersect points will be sorted.
+            var sortVector = f.Plane().Normal.Cross(p.Normal);
+
+            // We store the vertices that are created with split operations
+            // along with their loop. Because the vertex could belong
+            // to a loop on another face as well. For subsequent operations, 
+            // we only care about loops on this face.
+            var xsects = new List<Tuple<Vertex,Loop>>();
+            xsects.AddRange(SplitLoopEdges(f.Outer, p).Select(v=>new Tuple<Vertex,Loop>(v,f.Outer)));
+
+            if(f.Inner != null)
+            {
+                foreach(var innerLoop in f.Inner)
+                {
+                    xsects.AddRange(SplitLoopEdges(innerLoop, p).Select(v=> new Tuple<Vertex, Loop>(v,innerLoop)));
+                }
+            }
+
+            // Sort the intersections along the plane
+            // TODO: See if we can sort by id only and
+            // avoid this geometric test.
+            xsects.Sort(new VertexComparer(sortVector));
+
+            // Create new edges at the even intervals
+            for(var i=0; i<xsects.Count-1; i+=2)
+            {
+                var v0 = xsects[i].Item1;
+                var v1 = xsects[i+1].Item1;
+
+                // Find the loops in this face that correspond
+                // to the verts.
+                var v0loop = xsects[i].Item2;
+                var v1loop = xsects[i+1].Item2;
+
+                // Find loop half edge that ends at v0
+                var v0i = v0loop.Edges.IndexOf(v0loop.Edges.First(e=>e.Vertex == v0));
+                var he0 = v0i == 0 ? v0loop.Edges[v0loop.Edges.Count -1] : v0loop.Edges[v0i-1];
+
+                // Find the loop half edge that starts at v1
+                var he1 = v1loop.Edges.First(e=>e.Vertex == v1);
+
+                // We're splitting between a face edge
+                // and an inner loop.
+                if(f.Inner != null && f.Inner.Contains(v1loop))
+                {
+                    // Add v1loop to v0loop
+                    v0loop.Edges.AddRange(v1loop.Edges);
+
+                    // Remove the v1loop from the inner collection
+                    f.Inner.Remove(v1loop);
+
+                    // Join two loops with an edge.
+                    var e = this.AddEdge(v0, v1);
+                    v0loop.InsertEdgeAfter(he0, e.Left);
+                    v1loop.InsertEdgeBefore(he1, e.Right);
+                }
+                // If we're splitting straight across a face.
+                else 
+                {
+                    // Create a new loop.
+                    var newLoop = new Loop();
+                    
+                    // Put all edges between v0 and v1 in the
+                    // new loop.
+                    var start = v0;
+                    var newLoopi = v0loop.Edges.IndexOf(v0.HalfEdge);
+                    var edgesToRemove = new List<HalfEdge>();
+                    while(start != v1)
+                    {
+                        newLoop.Edges.Add(start.HalfEdge);
+                        edgesToRemove.Add(start.HalfEdge);
+                        newLoopi++;
+
+                        // Loop around to the first edge
+                        if(newLoopi == v0loop.Edges.Count)
+                        {
+                            newLoopi = 0;
+                        }
+                        start = v0loop.Edges[newLoopi].Vertex;
+                    }
+
+                    var e = this.AddEdge(v0, v1);
+
+                    // Ensure that the loops are set.
+                    e.Right.Loop = newLoop;
+                    e.Left.Loop = v0loop;
+
+                    // Close the original loop
+                    v0loop.InsertEdgeAfter(he0, e.Left);
+
+                    // Close the new loop.
+                    newLoop.Edges.Add(e.Right);
+
+                    // Remove the new loop edges
+                    // from the original loop.
+                    foreach(var de in edgesToRemove)
+                    {
+                        v0loop.Edges.Remove(de);
+                    }
+
+                    // Add one new face for the new loop.
+                    this.AddFace(newLoop);
+                }
+            }
         }
 
         private Edge[] ProjectEdgeAlong(Edge[] loop, Vector3 v, Plane p)
@@ -707,24 +850,36 @@ namespace Elements.Geometry.Solids
             return openEdge;
         }
     
-        private void SplitEdge(Plane p, Edge e)
+        private Vertex SplitEdge(Plane p, Edge e)
         {
             var start = e.Left.Vertex;
             var end = e.Right.Vertex;
+
+            // If the plane hits an existing vertex
+            // return the vertex.
+            if(Math.Abs(start.Point.DistanceTo(p)) < Vector3.Tolerance)
+            {
+                return start;
+            }
+            if(Math.Abs(end.Point.DistanceTo(p)) < Vector3.Tolerance)
+            {
+                return end;
+            }
+            
             var xsect = new Line(start.Point, end.Point).Intersect(p);
             if(xsect == null)
             {
-                return;
+                return null;
             }
 
             // Add vertex at intersection.
             // Create new edge from vertex to end.
-            var mid = AddVertex(xsect);
-            var e1 = AddEdge(mid, end);
+            var split = AddVertex(xsect);
+            var e1 = AddEdgeAfter(split, end, e);
 
             // Adjust end of existing edge to
             // new vertex
-            e.Right.Vertex = mid;
+            e.Right.Vertex = split;
             if(e.Left.Loop != null)
             {
                 e.Left.Loop.InsertEdgeAfter(e.Left, e1.Left);
@@ -733,6 +888,54 @@ namespace Elements.Geometry.Solids
             {
                 e.Right.Loop.InsertEdgeBefore(e.Right, e1.Right);
             }
+
+            return split;
+        }
+
+        private List<Vertex> SplitLoopEdges(Loop loop, Plane p)
+        {
+            var xsects = new List<Vertex>();
+            
+            var edges = loop.Edges.ToArray();
+            for(var i=0; i<edges.Length; i++)
+            {   
+                var e = edges[i];
+                var v = SplitEdge(p, e.Edge);
+                if(v == null)
+                {
+                    continue;
+                }
+                if(!xsects.Contains(v))
+                {
+                    xsects.Add(v);
+                }
+            }
+            return xsects;
         }
     }
+
+    internal class VertexComparer : IComparer<Tuple<Vertex,Loop>>
+    {
+        private Vector3 _sortVector;
+
+        public VertexComparer(Vector3 sortVector)
+        {
+            this._sortVector = sortVector;
+        }
+
+        public int Compare(Tuple<Vertex,Loop> x, Tuple<Vertex,Loop> y)
+        {
+            var v = (y.Item1.Point - x.Item1.Point).Dot(this._sortVector);
+            if(v > 0)
+            {
+                return -1;
+            }
+            else if(v < 0)
+            {
+                return 1;
+            }
+            return 0;
+        }
+    }
+
 }

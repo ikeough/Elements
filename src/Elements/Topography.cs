@@ -187,7 +187,7 @@ namespace Elements
                     input.Add(v.Position);
                 }
 
-                foreach (var f in solid.Faces.Values)
+                foreach (var f in solid.Faces)
                 {
                     var fp = f.Plane();
                     if (transform != null)
@@ -261,7 +261,7 @@ namespace Elements
             var inside = 0;
             var outside = 0;
             var xsect = 0;
-            foreach (var f in s.Faces.Values)
+            foreach (var f in s.Faces)
             {
                 var p = f.Plane();
                 if (trans != null)

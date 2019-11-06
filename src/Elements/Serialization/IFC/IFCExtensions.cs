@@ -389,7 +389,7 @@ namespace Elements.Serialization.IFC
                         var f = shell.CfsFaces[i];
                         var boundCount = 0;
                         Loop outer = null;
-                        Loop[] inner = new Loop[f.Bounds.Count - 1];
+                        var inner = new List<Loop>(f.Bounds.Count - 1);
                         foreach (var b in f.Bounds)
                         {
                             var loop = (IfcPolyLoop)b.Bound;

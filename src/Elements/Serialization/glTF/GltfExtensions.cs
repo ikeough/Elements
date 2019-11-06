@@ -496,7 +496,7 @@ namespace Elements.Serialization.glTF
             var edgeCount = 0;
             var vertices = new List<Vector3>();
             var verticesHighlighted = new List<Vector3>();
-            foreach(var e in solid.Edges.Values)
+            foreach(var e in solid.Edges)
             {
                 if(e.Left.Loop == null || e.Right.Loop == null)
                 {
@@ -711,27 +711,27 @@ namespace Elements.Serialization.glTF
             var floatSize = sizeof(float);
             var ushortSize = sizeof(ushort);
             var vBuff = new byte[vertices.Count * 3 * floatSize];
-            // var indices = new byte[vertices.Count / 2 *  2 * ushortSize];
             var indices = new byte[vertices.Count *  2 * ushortSize];
 
             var vi = 0;
             var ii = 0;
-            for(var i=0; i < vertices.Count; i++)
+            for(var i=0; i < vertices.Count-1; i+= 2)
             {
-                var v = vertices[i];
-                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.X), 0, vBuff, vi, floatSize);
-                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.Y), 0, vBuff, vi + floatSize, floatSize);
-                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.Z), 0, vBuff, vi +  2 * floatSize, floatSize);
+                var v1 = vertices[i];
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v1.X), 0, vBuff, vi, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v1.Y), 0, vBuff, vi + floatSize, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v1.Z), 0, vBuff, vi +  2 * floatSize, floatSize);
                 vi += 3 * floatSize;
 
-                // On every even index, write a line segment.
-                // if(i % 2 == 0 && i < vertices.Count - 1)
-                if(i < vertices.Count - 1)
-                {
-                    System.Buffer.BlockCopy(BitConverter.GetBytes((ushort)i), 0, indices, ii, ushortSize);
-                    System.Buffer.BlockCopy(BitConverter.GetBytes((ushort)(i+1)), 0, indices, ii + ushortSize, ushortSize);
-                    ii += 2 * ushortSize;
-                }
+                var v2 = vertices[i+1];
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v2.X), 0, vBuff, vi, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v2.Y), 0, vBuff, vi + floatSize, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v2.Z), 0, vBuff, vi +  2 * floatSize, floatSize);
+                vi += 3 * floatSize;
+                
+                System.Buffer.BlockCopy(BitConverter.GetBytes((ushort)i), 0, indices, ii, ushortSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((ushort)(i+1)), 0, indices, ii + ushortSize, ushortSize);
+                ii += 2 * ushortSize;
             }
 
             var bbox = new BBox3(vertices);

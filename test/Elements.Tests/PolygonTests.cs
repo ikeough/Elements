@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
+using Newtonsoft.Json;
 
 namespace Elements.Geometry.Tests
 {
@@ -652,6 +653,15 @@ namespace Elements.Geometry.Tests
             var c = new Vector3(5,0,5);
             var p = new Polygon(new[]{a,b,c});
         
+        }
+
+        [Fact]
+        public void Serialize()
+        {
+            var p = Polygon.Ngon(12);
+            var json = JsonConvert.SerializeObject(p);
+            var newP = JsonConvert.DeserializeObject<Polygon>(json);
+            Assert.Equal(newP.Vertices.Count, p.Vertices.Count);
         }
     }
 }

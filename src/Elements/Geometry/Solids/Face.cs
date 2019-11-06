@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,7 +22,7 @@ namespace Elements.Geometry.Solids
         /// <summary>
         /// A collection of CW wound Edges.
         /// </summary>
-        public Loop[] Inner { get; internal set;}
+        public List<Loop> Inner { get; internal set;}
 
         /// <summary>
         /// Construct a Face.
@@ -29,7 +30,7 @@ namespace Elements.Geometry.Solids
         /// <param name="id"></param>
         /// <param name="outer">The outer loop of the Face.</param>
         /// <param name="inner">The inner loops of the Face.</param>
-        internal Face(long id, Loop outer, Loop[] inner)
+        internal Face(long id, Loop outer, List<Loop> inner)
         {
             this.Id = id;
             this.Outer = outer;
@@ -42,6 +43,24 @@ namespace Elements.Geometry.Solids
                     loop.Face = this;
                 }
             }
+        }
+
+        internal Plane Plane()
+        {
+            var edges = this.Outer.Edges;
+            var a = edges[0].Vertex.Point;
+            var b = edges[1].Vertex.Point;
+            var ab = (b - a).Normalized();
+            // Search for the next best point to make a plane
+            for(var i=2; i<edges.Count; i++)
+            {
+                var c = edges[i].Vertex.Point - b;
+                if(!c.IsParallelTo(ab))
+                {
+                    return new Plane(a,b,c);
+                }
+            }
+            return null;
         }
 
         internal void Slice(Plane p, ref List<Vector3> inside, ref List<Vector3> outside)

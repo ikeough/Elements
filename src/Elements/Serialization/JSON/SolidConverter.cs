@@ -88,7 +88,7 @@ namespace Elements.Serialization.JSON
                         }
                     }
                 }
-                solid.AddFace(id, outer, inners.ToArray());
+                solid.AddFace(id, outer, inners);
             }
 
             return solid;
@@ -98,14 +98,15 @@ namespace Elements.Serialization.JSON
         {
             var vobj = (JObject)heobj.GetValue("vertex");
             var vid = (long)heobj.GetValue("vertex_id");
-            var v = solid.Vertices[vid];
+            var v = solid.Vertices.First(vx=>vx.Id == vid);
 
             var he = new HalfEdge(v, loop);
             loop.AddEdgeToEnd(he);
 
             var eid = (long)heobj.GetValue("edge_id");
-            Edge edge;
-            if(!solid.Edges.TryGetValue(eid, out edge))
+            var edge = solid.Edges.FirstOrDefault(e=>e.Id == eid);
+
+            if(edge == null)
             {
                 edge = solid.AddEdge(eid);
             }
@@ -133,7 +134,7 @@ namespace Elements.Serialization.JSON
 
             writer.WritePropertyName("vertices");
             writer.WriteStartArray();
-            foreach(var v in solid.Vertices.Values)
+            foreach(var v in solid.Vertices)
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("id");
@@ -151,7 +152,7 @@ namespace Elements.Serialization.JSON
             writer.WritePropertyName("faces");
             writer.WriteStartArray();
 
-            foreach(var f in solid.Faces.Values)
+            foreach(var f in solid.Faces)
             {
                 writer.WriteStartObject();
 

@@ -29,8 +29,8 @@ namespace Elements.Geometry.Solids
         internal Edge(long id, Vertex from, Vertex to)
         {
             this.Id = id;
-            this.Left = new HalfEdge(this, from);
-            this.Right = new HalfEdge(this, to);
+            this.Left = from.HalfEdge == null ? new HalfEdge(this, from) : from.HalfEdge;
+            this.Right = to.HalfEdge == null ? new HalfEdge(this, to) : to.HalfEdge;
         }
         
         /// <summary>
