@@ -177,6 +177,14 @@ namespace Elements.Tests
         }
 
         [Fact]
+        public void TriangleFaceCorrectOrdering()
+        {
+            var solid = new Solid();
+            var poly = Polygon.Ngon(3);
+            var f = solid.AddFace(poly);
+        }
+
+        [Fact]
         public void SplitQuadDiamond()
         {
             var solid = new Solid();
@@ -201,6 +209,7 @@ namespace Elements.Tests
             var p = new Plane(Vector3.Origin, Vector3.XAxis);
         
             solid.SplitFace(f, p);
+
             Assert.Equal(6, solid.Edges.Count);
             Assert.Equal(5, solid.Vertices.Count);
             Assert.Equal(2, solid.Faces.Count);
@@ -251,10 +260,17 @@ namespace Elements.Tests
             var p = Polygon.Rectangle(10, 10);
             solid.AddFace(p);
             var r = new Random();
+            var runIndex = 0;
             for(var x = -5;x < 5; x++)
             {
                 var s = new Plane(new Vector3(x,0,0), Vector3.XAxis);
                 solid.Slice(s);
+                output.WriteLine($"Run {runIndex}:");
+                foreach(var f in solid.Faces)
+                {
+                    output.WriteLine(f.ToString());
+                }
+                runIndex++;
             }
 
             // for(var y=-5; y<5; y++)

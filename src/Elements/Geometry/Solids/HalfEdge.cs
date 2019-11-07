@@ -27,13 +27,11 @@ namespace Elements.Geometry.Solids
         public HalfEdge(Vertex v)
         {
             this.Vertex = v;
-            v.HalfEdge = this;
         }
 
         internal HalfEdge(Vertex v, Loop l)
         {
             this.Vertex = v;
-            v.HalfEdge = this;
             this.Loop = l;
         }
 
@@ -52,7 +50,6 @@ namespace Elements.Geometry.Solids
         {
             this.Edge = edge;
             this.Vertex = vertex;
-            this.Vertex.HalfEdge = this;
         }
 
         /// <summary>

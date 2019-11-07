@@ -733,13 +733,17 @@ namespace Elements.Geometry.Solids
                     
                     // Put all edges between v0 and v1 in the
                     // new loop.
-                    var start = v0;
-                    var newLoopi = v0loop.Edges.IndexOf(v0.HalfEdge);
+                    var cutStart = FindHalfEdgeForVertex(v0loop, v0);
+                    var cutEnd = FindHalfEdgeForVertex(v0loop, v1);
+
                     var edgesToRemove = new List<HalfEdge>();
-                    while(start != v1)
+
+                    var newLoopi = v0loop.Edges.IndexOf(cutStart);
+                    var next = cutStart;
+                    while(next != cutEnd)
                     {
-                        newLoop.Edges.Add(start.HalfEdge);
-                        edgesToRemove.Add(start.HalfEdge);
+                        newLoop.Edges.Add(next);
+                        edgesToRemove.Add(next);
                         newLoopi++;
 
                         // Loop around to the first edge
@@ -747,7 +751,7 @@ namespace Elements.Geometry.Solids
                         {
                             newLoopi = 0;
                         }
-                        start = v0loop.Edges[newLoopi].Vertex;
+                        next = v0loop.Edges[newLoopi];
                     }
 
                     var e = this.AddEdge(v0, v1);
@@ -773,6 +777,18 @@ namespace Elements.Geometry.Solids
                     this.AddFace(newLoop);
                 }
             }
+        }
+
+        private HalfEdge FindHalfEdgeForVertex(Loop l, Vertex v)
+        {
+            foreach(var e in l.Edges)
+            {
+                if(e.Vertex == v)
+                {
+                    return e;
+                }
+            }
+            return null;
         }
 
         private Edge[] ProjectEdgeAlong(Edge[] loop, Vector3 v, Plane p)

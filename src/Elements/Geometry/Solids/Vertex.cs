@@ -13,7 +13,7 @@ namespace Elements.Geometry.Solids
         /// <summary>
         /// The HalfEdge which has this Vertex as its start.
         /// </summary>
-        public HalfEdge HalfEdge{get; set;}
+        // public HalfEdge HalfEdge{get; set;}
         
         /// <summary>
         /// The location of the Vertex.
