@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width">
     <meta name="title" content="Class Model
    | Hypar Docs ">
-    <meta name="generator" content="docfx 2.40.4.0">
+    <meta name="generator" content="docfx 2.47.0.0">
     
     <link rel="shortcut icon" href="../favicon.ico">
     <link rel="stylesheet" href="../styles/docfx.vendor.css">
@@ -167,7 +167,7 @@ public Model(Position origin, IDictionary&lt;Guid, Element&gt; elements)</code><
   <div class="codewrapper">
     <pre><code class="lang-csharp hljs">[JsonProperty(&quot;Elements&quot;, Required = Required.Always)]
 [Required]
-public IDictionary&lt;Guid, Element&gt; Elements { get; }</code></pre>
+public IDictionary&lt;Guid, Element&gt; Elements { get; set; }</code></pre>
   </div>
   <h5 class="propertyValue">Property Value</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -192,7 +192,7 @@ public IDictionary&lt;Guid, Element&gt; Elements { get; }</code></pre>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
     <pre><code class="lang-csharp hljs">[JsonProperty(&quot;Origin&quot;, Required = Required.AllowNull)]
-public Position Origin { get; }</code></pre>
+public Position Origin { get; set; }</code></pre>
   </div>
   <h5 class="propertyValue">Property Value</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -212,18 +212,16 @@ public Position Origin { get; }</code></pre>
   <h3 id="methods">Methods
   </h3>
   <a id="Elements_Model_AddElement_" data-uid="Elements.Model.AddElement*"></a>
-  <h4 id="Elements_Model_AddElement_Elements_Element_" data-uid="Elements.Model.AddElement(Elements.Element)">AddElement(Element)</h4>
+  <h4 id="Elements_Model_AddElement_Elements_Element_System_Boolean_" data-uid="Elements.Model.AddElement(Elements.Element,System.Boolean)">AddElement(Element, Boolean)</h4>
   <div class="markdown level1 summary"><p>Add an element to the model.
-Each property of the element which has a type of Element
-will be added to the entities collection before the element itself.
-This enables serializers to reference Elements by id.
-Properties which are IList of Element will have each of their items
-added to the entities collection as well.</p>
+This operation recursively searches the element's properties
+for element sub-properties and adds those elements to the elements
+dictionary before adding the element itself.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public void AddElement(Element element)</code></pre>
+    <pre><code class="lang-csharp hljs">public void AddElement(Element element, bool gatherSubElements = true)</code></pre>
   </div>
   <h5 class="parameters">Parameters</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -241,16 +239,23 @@ added to the entities collection as well.</p>
         <td><p>The element to add to the model.</p>
 </td>
       </tr>
+      <tr>
+        <td><span class="xref">System.Boolean</span></td>
+        <td><span class="parametername">gatherSubElements</span></td>
+        <td><p>Should sub-elements in properties be
+added to the model's elements collection?</p>
+</td>
+      </tr>
     </tbody>
   </table>
   <a id="Elements_Model_AddElements_" data-uid="Elements.Model.AddElements*"></a>
-  <h4 id="Elements_Model_AddElements_System_Collections_Generic_IEnumerable_Elements_Element__" data-uid="Elements.Model.AddElements(System.Collections.Generic.IEnumerable{Elements.Element})">AddElements(IEnumerable&lt;Element&gt;)</h4>
+  <h4 id="Elements_Model_AddElements_System_Collections_Generic_IEnumerable_Elements_Element__System_Boolean_" data-uid="Elements.Model.AddElements(System.Collections.Generic.IEnumerable{Elements.Element},System.Boolean)">AddElements(IEnumerable&lt;Element&gt;, Boolean)</h4>
   <div class="markdown level1 summary"><p>Add a collection of elements to the model.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public void AddElements(IEnumerable&lt;Element&gt; elements)</code></pre>
+    <pre><code class="lang-csharp hljs">public void AddElements(IEnumerable&lt;Element&gt; elements, bool gatherSubElements = true)</code></pre>
   </div>
   <h5 class="parameters">Parameters</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -266,6 +271,13 @@ added to the entities collection as well.</p>
         <td><span class="xref">System.Collections.Generic.IEnumerable</span>&lt;<a class="xref" href="Elements.Element.html">Element</a>&gt;</td>
         <td><span class="parametername">elements</span></td>
         <td><p>The elements to add to the model.</p>
+</td>
+      </tr>
+      <tr>
+        <td><span class="xref">System.Boolean</span></td>
+        <td><span class="parametername">gatherSubElements</span></td>
+        <td><p>Should sub-elements in properties be
+added to the model's elements collection?</p>
 </td>
       </tr>
     </tbody>
@@ -366,7 +378,7 @@ added to the entities collection as well.</p>
   <div class="markdown level1 conceptual"></div>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Model FromJson(string data, List&lt;string&gt; errors = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Model FromJson(string json, List&lt;string&gt; errors = null)</code></pre>
   </div>
   <h5 class="parameters">Parameters</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -380,7 +392,7 @@ added to the entities collection as well.</p>
     <tbody>
       <tr>
         <td><span class="xref">System.String</span></td>
-        <td><span class="parametername">data</span></td>
+        <td><span class="parametername">json</span></td>
         <td><p>The JSON representing the model.</p>
 </td>
       </tr>

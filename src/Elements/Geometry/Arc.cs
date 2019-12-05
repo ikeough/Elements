@@ -8,7 +8,7 @@ namespace Elements.Geometry
     /// <summary>
     /// An arc defined as a CCW rotation from the +X axis around a center between a start angle and an end angle.
     /// </summary>
-    public partial class Arc : ICurve
+    public partial class Arc : ICurve, IEquatable<Arc>
     {
         /// <summary>
         /// Calculate the length of the arc.
@@ -72,8 +72,8 @@ namespace Elements.Geometry
         /// <summary>
         /// Get a collection of transforms which represent frames along the arc.
         /// </summary>
-        /// <param name="startSetback">The offset from the start of the arc.</param>
-        /// <param name="endSetback">The offset from the end of the arc.</param>
+        /// <param name="startSetback">The parameter offset from the start of the arc. Between 0 and 1.</param>
+        /// <param name="endSetback">The parameter offset from the end of the arc. Between 0 and 1.</param>
         /// <param name="rotation">An optional rotation for all frames around their Z axes.</param>
         /// <returns>A collection of transforms.</returns>
         public override Transform[] Frames(double startSetback, double endSetback, double rotation = 0.0)
@@ -149,6 +149,20 @@ namespace Elements.Geometry
                 vertices[i] = PointAt(t);
             }
             return vertices;
+        }
+
+        /// <summary>
+        /// Is this arc equal to the provided arc?
+        /// </summary>
+        /// <param name="other">The arc to test.</param>
+        /// <returns>Returns true if the two arcs are equal, otherwise false.</returns>
+        public bool Equals(Arc other)
+        {
+            if(other == null)
+            {
+                return false;
+            }
+            return this.Center.Equals(other.Center) && this.StartAngle == other.StartAngle && this.EndAngle == other.EndAngle;
         }
     }
 }

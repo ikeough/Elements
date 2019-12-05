@@ -106,6 +106,13 @@ namespace Elements.Geometry.Solids
             var solid = new Solid();
 
             var l = curve.Length();
+            // The start and end setbacks can't be more than
+            // the length of the beam together.
+            if((startSetback + endSetback) >= l)
+            {
+                startSetback = 0;
+                endSetback = 0;
+            }
             var ssb = startSetback / l;
             var esb = endSetback / l;
 
@@ -179,12 +186,12 @@ namespace Elements.Geometry.Solids
             // We do a difference of the polygons
             // to get the clipped shape. This will fail in interesting
             // ways if the clip creates two islands.
-            if(holes != null)
-            {
-                var newPerimeter = perimeter.Difference(holes);
-                perimeter = newPerimeter[0];
-                holes = newPerimeter.Skip(1).Take(newPerimeter.Count - 1).ToArray();
-            }
+            // if(holes != null)
+            // {
+            //     var newPerimeter = perimeter.Difference(holes);
+            //     perimeter = newPerimeter[0];
+            //     holes = newPerimeter.Skip(1).Take(newPerimeter.Count - 1).ToArray();
+            // }
             
             var solid = new Solid();
             Face fStart = null;

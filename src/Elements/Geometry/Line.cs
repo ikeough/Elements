@@ -7,7 +7,7 @@ namespace Elements.Geometry
     /// <summary>
     /// A linear curve between two points.
     /// </summary>
-    public partial class Line : Curve
+    public partial class Line : Curve, IEquatable<Line>
     {
         /// <summary>
         /// Calculate the length of the line.
@@ -94,18 +94,17 @@ namespace Elements.Geometry
         }
 
         /// <summary>
-        /// Does this line equal the provided line?
+        /// Is this line equal to the provided line?
         /// </summary>
-        /// <param name="obj">The target line.</param>
+        /// <param name="other">The target line.</param>
         /// <returns>True if the start and end points of the lines are equal, otherwise false.</returns>
-        public override bool Equals(object obj)
+        public bool Equals(Line other)
         {
-            var line = obj as Line;
-            if (line == null)
+            if (other == null)
             {
                 return false;
             }
-            return this.Start.Equals(line.Start) && this.End.Equals(line.End);
+            return this.Start.Equals(other.Start) && this.End.Equals(other.End);
         }
 
         /// <summary>
@@ -120,14 +119,13 @@ namespace Elements.Geometry
         /// <summary>
         /// Get a collection of transforms which represent frames along this line.
         /// </summary>
-        /// <param name="startSetback">The offset from the start of the line.</param>
-        /// <param name="endSetback">The offset from the end of the line.</param>
+        /// <param name="startSetback">The parameter offset from the start of the line. Between 0 and 1.</param>
+        /// <param name="endSetback">The parameter offset from the end of the line. Between 0 and 1.</param>
         /// <param name="rotation">An optional rotation in degrees around all the frames' z axes.</param>
         /// <returns>A collection of transforms.</returns>
         public override Transform[] Frames(double startSetback, double endSetback, double rotation = 0.0)
         {
-            var l = this.Length();
-            return new Transform[] { TransformAt(0.0 + startSetback / l, rotation), TransformAt(1.0 - endSetback / l, rotation) };
+            return new Transform[] { TransformAt(0.0 + startSetback, rotation), TransformAt(1.0 - endSetback, rotation) };
         }
 
         /// <summary>
@@ -165,14 +163,14 @@ namespace Elements.Geometry
         {
             var a = Vector3.CCW(this.Start, this.End, l.Start) * Vector3.CCW(this.Start, this.End, l.End);
             var b = Vector3.CCW(l.Start, l.End, this.Start) * Vector3.CCW(l.Start, l.End, this.End);
-            if (IsAlmostZero(a) || a > Vector3.Tolerance ) return false;
-            if (IsAlmostZero(b) || b > Vector3.Tolerance ) return false;
+            if (IsAlmostZero(a) || a > Vector3.Epsilon ) return false;
+            if (IsAlmostZero(b) || b > Vector3.Epsilon ) return false;
             return true;
         }
 
         private bool IsAlmostZero(double a)
         {
-            return Math.Abs(a) < Vector3.Tolerance;
+            return Math.Abs(a) < Vector3.Epsilon;
         }
 
         /// <summary>

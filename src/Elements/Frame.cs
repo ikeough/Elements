@@ -14,12 +14,12 @@ namespace Elements
         /// <summary>
         /// The frame's profile.
         /// </summary>
-        public Profile Profile { get; private set; }
+        public Profile Profile { get; set; }
 
         /// <summary>
         /// The perimeter of the frame.
         /// </summary>
-        public Curve Curve { get; private set; }
+        public Curve Curve { get; set; }
 
         /// <summary>
         /// Create a frame.
@@ -52,10 +52,15 @@ namespace Elements
         {
             this.Curve = curve.Offset(-offset)[0];
             this.Profile = profile;
-            if(this.Representation.SolidOperations.Count == 0)
-            {
-                this.Representation.SolidOperations.Add(new Sweep(this.Profile, this.Curve, 0.0, 0.0, 0.0, false));
-            }
+        }
+
+        /// <summary>
+        /// Update representations.
+        /// </summary>
+        public override void UpdateRepresentations()
+        {
+            this.Representation.SolidOperations.Clear();
+            this.Representation.SolidOperations.Add(new Sweep(this.Profile, this.Curve, 0.0, 0.0, 0.0, false));
         }
     }
 }

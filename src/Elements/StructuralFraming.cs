@@ -15,17 +15,17 @@ namespace Elements
         /// <summary>
         /// The center line of the framing element.
         /// </summary>
-        public Curve Curve { get; private set; }
+        public Curve Curve { get; set; }
 
         /// <summary>
         /// The setback of the framing's extrusion at the start.
         /// </summary>
-        public double StartSetback { get; private set; }
+        public double StartSetback { get; set; }
 
         /// <summary>
         /// The setback of the framing's extrusion at the end.
         /// </summary>
-        public double EndSetback { get; private set; }
+        public double EndSetback { get; set; }
 
         /// <summary>
         /// The structural framing's profile.
@@ -38,8 +38,8 @@ namespace Elements
         /// <param name="curve">The center line of the beam.</param>
         /// <param name="profile">The structural framing's profile.</param>
         /// <param name="material">The structural framing's material.</param>
-        /// <param name="startSetback">The setback of the beam's extrusion at its start.</param>
-        /// <param name="endSetback">The setback of the beam's extrusion at its end.</param>
+        /// <param name="startSetback">The setback distance of the beam's extrusion at its start.</param>
+        /// <param name="endSetback">The setback distance of the beam's extrusion at its end.</param>
         /// <param name="rotation">An optional rotation in degrees of the transform around its z axis.</param>
         /// <param name="transform">The element's Transform.</param>
         /// <param name="representation">The structural framing's representation.</param>
@@ -60,13 +60,11 @@ namespace Elements
                                                             id != default(Guid) ? id : Guid.NewGuid(),
                                                             name)
         {
-            SetProperties(curve, profile, material, transform, startSetback, endSetback, rotation);
+            SetProperties(curve, profile, startSetback, endSetback, rotation);
         }
 
         private void SetProperties(Curve curve,
                                    Profile profile,
-                                   Material material,
-                                   Transform transform,
                                    double startSetback,
                                    double endSetback,
                                    double rotation)
@@ -80,12 +78,7 @@ namespace Elements
             this.StartSetback = startSetback;
             this.EndSetback = endSetback;
             this.Profile = profile;
-            this.Material = material != null ? material : BuiltInMaterials.Steel;
             this._rotation = rotation;
-            if(this.Representation.SolidOperations.Count == 0)
-            {
-                this.Representation.SolidOperations.Add(new Sweep(this.Profile, this.Curve, this.StartSetback, this.EndSetback, this._rotation, false));
-            }
         }
 
         /// <summary>
@@ -107,6 +100,15 @@ namespace Elements
         public Profile ProfileTransformed()
         {
             return this.Transform != null ? this.Transform.OfProfile(this.Profile) : this.Profile;
+        }
+        
+        /// <summary>
+        /// Update the representations.
+        /// </summary>
+        public override void UpdateRepresentations()
+        {
+            this.Representation.SolidOperations.Clear();
+            this.Representation.SolidOperations.Add(new Sweep(this.Profile, this.Curve, this.StartSetback, this.EndSetback, this._rotation, false));
         }
     }
 }

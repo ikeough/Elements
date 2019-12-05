@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width">
     <meta name="title" content="Class Line
    | Hypar Docs ">
-    <meta name="generator" content="docfx 2.40.4.0">
+    <meta name="generator" content="docfx 2.47.0.0">
     
     <link rel="shortcut icon" href="../favicon.ico">
     <link rel="stylesheet" href="../styles/docfx.vendor.css">
@@ -192,7 +192,7 @@ public Line(Vector3 start, Vector3 end)</code></pre>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
     <pre><code class="lang-csharp hljs">[JsonProperty(&quot;End&quot;, Required = Required.AllowNull)]
-public Vector3 End { get; }</code></pre>
+public Vector3 End { get; set; }</code></pre>
   </div>
   <h5 class="propertyValue">Property Value</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -217,7 +217,7 @@ public Vector3 End { get; }</code></pre>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
     <pre><code class="lang-csharp hljs">[JsonProperty(&quot;Start&quot;, Required = Required.AllowNull)]
-public Vector3 Start { get; }</code></pre>
+public Vector3 Start { get; set; }</code></pre>
   </div>
   <h5 class="propertyValue">Property Value</h5>
   <table class="table table-bordered table-striped table-condensed">
@@ -444,13 +444,13 @@ public Vector3 Start { get; }</code></pre>
       <tr>
         <td><span class="xref">System.Double</span></td>
         <td><span class="parametername">startSetback</span></td>
-        <td><p>The offset from the start of the line.</p>
+        <td><p>The parameter offset from the start of the line. Between 0 and 1.</p>
 </td>
       </tr>
       <tr>
         <td><span class="xref">System.Double</span></td>
         <td><span class="parametername">endSetback</span></td>
-        <td><p>The offset from the end of the line.</p>
+        <td><p>The parameter offset from the end of the line. Between 0 and 1.</p>
 </td>
       </tr>
       <tr>

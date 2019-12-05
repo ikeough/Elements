@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace Elements.Serialization.JSON
 {
@@ -22,17 +23,17 @@ namespace Elements.Serialization.JSON
         private Dictionary<string, Type> _typeCache;
 
         [System.ThreadStatic]
-        private static Dictionary<Guid, Element> _identifiables;   // = new Dictionary<Guid, Identifiable>();
+        private static Dictionary<Guid, Element> _elements;
         
-        public static Dictionary<Guid, Element> Identifiables
+        public static Dictionary<Guid, Element> Elements
         {
             get
             {
-                if(_identifiables == null)
+                if(_elements == null)
                 {
-                    _identifiables = new Dictionary<Guid, Element>();
+                    _elements = new Dictionary<Guid, Element>();
                 }
-                return _identifiables;
+                return _elements;
             }
         }
 
@@ -132,42 +133,78 @@ namespace Elements.Serialization.JSON
 
         public override object ReadJson(Newtonsoft.Json.JsonReader reader, System.Type objectType, object existingValue, Newtonsoft.Json.JsonSerializer serializer)
         {
+            // The serialized value is an identifier, so the expectation is 
+            // that the element with that id has already been deserialized.
             if(typeof(Element).IsAssignableFrom(objectType) && reader.Path.Split('.').Length == 1)
             {
                 var id = Guid.Parse(reader.Value.ToString());
-                return Identifiables[id];
+                return Elements[id];
             }
 
             var jObject = serializer.Deserialize<Newtonsoft.Json.Linq.JObject>(reader);
             if (jObject == null)
-                return null;
-
-            var discriminator = Newtonsoft.Json.Linq.Extensions.Value<string>(jObject.GetValue(_discriminator));
-            var subtype = GetObjectSubtype(objectType, discriminator);
-            
-            var objectContract = serializer.ContractResolver.ResolveContract(subtype) as Newtonsoft.Json.Serialization.JsonObjectContract;
-            if (objectContract == null || System.Linq.Enumerable.All(objectContract.Properties, p => p.PropertyName != _discriminator))
             {
-                jObject.Remove(_discriminator);
+                return null;
+            }
+            
+            // We need to handle both cases where we're receiving JSON that has a
+            // discriminator, like that produced by serializing using this
+            // converter, and the case where the JSON does not have a discriminator,
+            // but the type is known during deserialization.
+            Type subtype;
+            JToken discriminatorToken;
+            string discriminator = null;
+            jObject.TryGetValue(_discriminator, out discriminatorToken);
+            if(discriminatorToken != null)
+            {   
+                discriminator = Newtonsoft.Json.Linq.Extensions.Value<string>(discriminatorToken);
+                subtype = GetObjectSubtype(objectType, discriminator);
+            
+                var objectContract = serializer.ContractResolver.ResolveContract(subtype) as Newtonsoft.Json.Serialization.JsonObjectContract;
+                if (objectContract == null || System.Linq.Enumerable.All(objectContract.Properties, p => p.PropertyName != _discriminator))
+                {
+                    jObject.Remove(_discriminator);
+                }
+            }
+            else
+            {
+                // Without a discriminator the call to GetObjectSubtype will
+                // fall through to returning either a [UserElement] type or 
+                // the object type.
+                subtype = GetObjectSubtype(objectType, null);
             }
 
             try
             {
                 _isReading = true;
                 var obj = serializer.Deserialize(jObject.CreateReader(), subtype);
-                
+
                 // Write the id to the cache so that we can retrieve it next time
                 // instead of de-serializing it again.
                 if(typeof(Element).IsAssignableFrom(objectType) && reader.Path.Split('.').Length > 1)
                 {
                     var ident = (Element)obj;
-                    if(!Identifiables.ContainsKey(ident.Id))
+                    if(!Elements.ContainsKey(ident.Id))
                     {
-                        Identifiables.Add(ident.Id, ident);
+                        Elements.Add(ident.Id, ident);
                     }
                 }
 
                 return obj;
+            }
+            catch(Exception ex)
+            {
+                var baseMessage = "This may happen if the type is not recognized in the system.";
+                var moreInfoMessage = "See the inner exception for more details.";
+
+                if(discriminator != null)
+                {
+                    throw new Exception($"An object with the discriminator, {discriminator}, could not be deserialized. {baseMessage} {moreInfoMessage}", ex);
+                }
+                else
+                {
+                    throw new Exception($"{baseMessage} {moreInfoMessage}", ex);
+                }
             }
             finally
             {
@@ -189,16 +226,14 @@ namespace Elements.Serialization.JSON
             // If the inheritance attributes is not supplied, as in the case
             // of a user-provided type, then we use the type cache of all
             // types with the UserElementType attribute.
-            if(_typeCache.ContainsKey(discriminator))
+            if(discriminator != null && _typeCache.ContainsKey(discriminator))
             {
                 return _typeCache[discriminator];
             }
 
-            throw new Exception($"The type with discriminator, {discriminator}, could not be found. The entity will not be deserialized.");
-
             // The default behavior for this converter, as provided by nJSONSchema
             // is to return the base objectType if a derived type can't be found.
-            // return objectType;
+            return objectType;
         }
 
         private string GetSubtypeDiscriminator(System.Type objectType)

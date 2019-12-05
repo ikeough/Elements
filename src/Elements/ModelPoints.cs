@@ -17,7 +17,7 @@ namespace Elements
         /// <summary>
         /// The locations of the points.
         /// </summary>
-        public IList<Vector3> Locations { get; private set;}
+        public IList<Vector3> Locations { get; set;}
 
         /// <summary>
         /// Create a collection of points.
@@ -39,14 +39,6 @@ namespace Elements
                                                      name)
         {
             this.Locations = locations != null ? locations : new List<Vector3>();
-        }
-
-        /// <summary>
-        /// Update the geometry.
-        /// </summary>
-        public override void UpdateRepresentations()
-        {
-            return;
         }
     }
 }

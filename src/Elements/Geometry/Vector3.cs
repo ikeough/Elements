@@ -10,9 +10,9 @@ namespace Elements.Geometry
     public partial class Vector3 : IComparable<Vector3>, IEquatable<Vector3>
     {
         /// <summary>
-        /// A tolerance for comparison operations.
+        /// A tolerance for comparison operations of 1e-9.
         /// </summary>
-        public static double Tolerance = 1e-9;
+        public static double Epsilon = 1e-9;
 
         private static Vector3 _xAxis = new Vector3(1, 0, 0);
         private static Vector3 _yAxis = new Vector3(0, 1, 0);
@@ -26,20 +26,6 @@ namespace Elements.Geometry
         public static Vector3 Origin
         {
             get { return _origin; }
-        }
-
-        /// <summary>
-        /// Is this vector equal to the provided vector?
-        /// </summary>
-        public override bool Equals(object obj)
-        {
-            var v = obj as Vector3;
-            if (v == null)
-            {
-                return false;
-            }
-
-            return this.IsAlmostEqualTo(v);
         }
 
         /// <summary>
@@ -335,9 +321,9 @@ namespace Elements.Geometry
         /// <returns>True if the difference of this vector and the supplied vector's components are all within Tolerance, otherwise false.</returns>
         public bool IsAlmostEqualTo(Vector3 v)
         {
-            if (Math.Abs(this.X - v.X) < Tolerance &&
-                Math.Abs(this.Y - v.Y) < Tolerance &&
-                Math.Abs(this.Z - v.Z) < Tolerance)
+            if (Math.Abs(this.X - v.X) < Epsilon &&
+                Math.Abs(this.Y - v.Y) < Epsilon &&
+                Math.Abs(this.Z - v.Z) < Epsilon)
             {
                 return true;
             }
@@ -412,19 +398,17 @@ namespace Elements.Geometry
         }
 
         /// <summary>
-        /// Implement the IEquatable interface.
+        /// Is this vector equal to the provided vector?
         /// </summary>
-        /// <param name="other"></param>
-        /// <returns>True if all the components of this and the provided vector are equal.</returns>
+        /// <param name="other">The vector to test.</param>
+        /// <returns>Returns true if all components of the two vectors are within Epsilon, otherwise false.</returns>
         public bool Equals(Vector3 other)
         {
-            var v = other as Vector3;
-            if (v == null)
+            if(other == null)
             {
                 return false;
             }
-
-            return this.IsAlmostEqualTo(v);
+            return this.IsAlmostEqualTo(other);
         }
 
         /// <summary>
@@ -434,6 +418,15 @@ namespace Elements.Geometry
         public bool IsNaN()
         {
             return Double.IsNaN(this.X) || Double.IsNaN(this.Y) || Double.IsNaN(this.Z);
+        }
+
+        /// <summary>
+        /// Is this vector zero length?
+        /// </summary>
+        /// <returns>True if this vector's components are all less than Epsilon.</returns>
+        public bool IsZero()
+        {
+            return Math.Abs(this.X) < Vector3.Epsilon && Math.Abs(this.Y) < Vector3.Epsilon && Math.Abs(this.Z) < Vector3.Epsilon;
         }
 
         /// <summary>
@@ -473,7 +466,7 @@ namespace Elements.Geometry
                 var d = points[i];
                 var cd = d - a;
                 var tp = ab.Dot(ac.Cross(cd));
-                if (Math.Abs(tp) > Vector3.Tolerance)
+                if (Math.Abs(tp) > Vector3.Epsilon)
                 {
                     return false;
                 }

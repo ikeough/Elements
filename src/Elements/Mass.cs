@@ -18,12 +18,12 @@ namespace Elements
         /// <summary>
         /// The profile of the mass.
         /// </summary>
-        public Profile Profile { get; private set; }
+        public Profile Profile { get; set; }
 
         /// <summary>
         /// The height of the mass.
         /// </summary>
-        public double Height { get; }
+        public double Height { get; set; }
 
         /// <summary>
         /// The thickness of the mass' extrusion.
@@ -62,10 +62,6 @@ namespace Elements
             }
             this.Profile = profile;
             this.Height = height;
-            if(this.Representation.SolidOperations.Count == 0)
-            {
-                this.Representation.SolidOperations.Add(new Extrude(this.Profile, this.Height, Vector3.ZAxis, 0.0, false));
-            }
         }
 
         /// <summary>
@@ -89,7 +85,8 @@ namespace Elements
         /// </summary>
         public override void UpdateRepresentations()
         {
-            return;
+            this.Representation.SolidOperations.Clear();
+            this.Representation.SolidOperations.Add(new Extrude(this.Profile, this.Height, Vector3.ZAxis, 0.0, false));
         }
     }
 }

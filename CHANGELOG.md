@@ -16,11 +16,13 @@
 - `Matrix` is now marked `internal`.
 - `SolidConverter` is now marked `internal`.
 - `Elements.Serialization.IFC.ModelExtensions` is now marked `internal`.
+- All core type property setters are now `public`.
+- The `elevation` parameter has been removed from `Floor`. Floor elevation is now set by passing a `Transform` with a Z coordinate.
 
 ### Added
 - `ModelCurve` - Draw curves in 3D.
 - `ModelPoints` - Draw collections of points in 3D.
-- `Elements.Generate` project.
+- `Elements.Generate.TypeGenerator` class.
 - `/Schemas` directory.
 - Optional `rotation` on `StructuralFraming` constructors.
 - `Model` now has Elements property which is `IDictionary<Guid,Element>`.
@@ -30,6 +32,7 @@
 - `Line.DivideByLength()`
 - `Line.DivideByCount()`
 - `Ray` class.
+- `Vector3.IsZero()`
 
 ### Removed
 - The empty Dynamo project.
@@ -42,6 +45,10 @@
 - Transforms on curves are now consistently oriented with the +X axis oriented to the "right" and the +Z axis oriented along the inverse of the tangent of the curve.
 - Built in materials for displaying transforms are now red, green, and blue. Previously they were all red.
 - All classes deriving from `Element` now pass their `id`, `transform`, and `name` to the base constructor.
+- Line/plane intersections now return null if the intersection is "behind" the start of the line.
+- Beams whose setbacks total more than the length of the beam no longer fail.
+- Plane construction no longer fails when the normal vector and the origin vector are "parallel".
+- Fixed #209.
 
 ## 0.3.8
 ### Changed
