@@ -5,6 +5,7 @@
 - #271
 
 ### Added
+- `Model.AddElements(params Element[] elements)`
 - `Transform.Move(double x, double y, double z)`
 - `Transform.Rotate(double angle)`
 
