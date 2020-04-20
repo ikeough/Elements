@@ -524,14 +524,17 @@ namespace Elements.Serialization.glTF
             scene.Nodes = new[] { 0 };
             gltf.Scenes = new[] { scene };
 
-            gltf.ExtensionsUsed = new[] { "KHR_materials_pbrSpecularGlossiness" };
-
+            gltf.ExtensionsUsed = new[] {
+                "KHR_materials_pbrSpecularGlossiness",
+                "KHR_materials_unlit"
+            };
             var buffer = new List<byte>();
             var bufferViews = new List<BufferView>();
 
-            var materials = gltf.AddMaterials(new[] { BuiltInMaterials.Default, BuiltInMaterials.Edges, BuiltInMaterials.EdgesHighlighted },
-                                              buffer,
-                                              bufferViews);
+            var materials = gltf.AddMaterials(
+                new[] { BuiltInMaterials.Default, BuiltInMaterials.Edges, BuiltInMaterials.EdgesHighlighted, BuiltInMaterials.Points, BuiltInMaterials.XAxis, BuiltInMaterials.YAxis },
+                buffer,
+                bufferViews);
 
             var mesh = new Elements.Geometry.Mesh();
             solid.Tessellate(ref mesh);
@@ -562,26 +565,42 @@ namespace Elements.Serialization.glTF
             CreateNodeForMesh(gltf, meshId, nodes, null);
 
             var edgeCount = 0;
-            var vertices = new List<Vector3>();
+            var verticesOuter = new List<Vector3>();
             var verticesHighlighted = new List<Vector3>();
+            var verticesInner = new List<Vector3>();
             foreach (var e in solid.Edges.Values)
             {
                 if (e.Left.Loop == null || e.Right.Loop == null)
                 {
                     verticesHighlighted.AddRange(new[] { e.Left.Vertex.Point, e.Right.Vertex.Point });
                 }
-                else
-                {
-                    vertices.AddRange(new[] { e.Left.Vertex.Point, e.Right.Vertex.Point });
-                }
-
                 edgeCount++;
             }
 
-            if (vertices.Count > 0)
+            foreach (var f in solid.Faces)
+            {
+                foreach (var he in f.Value.Outer.Edges)
+                {
+                    verticesOuter.AddRange(new[] { he.Edge.Left.Vertex.Point, he.Edge.Right.Vertex.Point });
+                    edgeCount++;
+                }
+                if (f.Value.Inner != null)
+                {
+                    foreach (var loop in f.Value.Inner)
+                    {
+                        foreach (var he in loop.Edges)
+                        {
+                            verticesInner.AddRange(new[] { he.Edge.Left.Vertex.Point, he.Edge.Right.Vertex.Point });
+                            edgeCount++;
+                        }
+                    }
+                }
+            }
+
+            if (verticesOuter.Count > 0)
             {
                 // Draw standard edges
-                AddLines(100000, vertices.ToArray(), gltf, materials[BuiltInMaterials.Edges.Name], buffer, bufferViews, accessors, meshes, nodes, false);
+                AddLines(100000, verticesOuter.ToArray(), gltf, materials[BuiltInMaterials.XAxis.Name], buffer, bufferViews, accessors, meshes, nodes, false);
             }
 
             if (verticesHighlighted.Count > 0)
@@ -589,6 +608,31 @@ namespace Elements.Serialization.glTF
                 // Draw highlighted edges
                 AddLines(100001, verticesHighlighted.ToArray(), gltf, materials[BuiltInMaterials.EdgesHighlighted.Name], buffer, bufferViews, accessors, meshes, nodes, false);
             }
+
+            if (verticesInner.Count > 0)
+            {
+                // Draw standard edges
+                AddLines(100000, verticesInner.ToArray(), gltf, materials[BuiltInMaterials.YAxis.Name], buffer, bufferViews, accessors, meshes, nodes, false);
+            }
+
+            foreach (var vtx in solid.Vertices)
+            {
+                var boxId = AddBox(vtx.Key, gltf, materials[BuiltInMaterials.Points.Name], buffer, bufferViews, accessors, meshes, nodes);
+                CreateNodeForMesh(gltf, boxId, nodes, new Transform(vtx.Value.Point));
+            }
+
+            // foreach (var f in solid.Faces)
+            // {
+            //     var n = f.Value.Plane().Normal;
+
+            //     foreach (var he in f.Value.Outer.Edges)
+            //     {
+            //         var o = he.Vertex.Point;
+            //         var d = (he.Edge.Right.Vertex.Point - he.Vertex.Point).Unitized();
+            //         var offsetD = d.Cross(n).Unitized().Negate();
+            //         AddArrow(100001, o + 0.05 * offsetD, d, gltf, materials[BuiltInMaterials.XAxis.Name], null, buffer, bufferViews, accessors, meshes, nodes);
+            //     }
+            // }
 
             var buff = new glTFLoader.Schema.Buffer();
             buff.ByteLength = buffer.Count;
@@ -603,6 +647,32 @@ namespace Elements.Serialization.glTF
             }
 
             gltf.SaveBinaryModel(buffer.ToArray(), path);
+        }
+
+        private static int AddBox(long id,
+                            Gltf gltf,
+                            int material,
+                            List<byte> buffer,
+                            List<BufferView> bufferViews,
+                            List<Accessor> accessors,
+                            List<glTFLoader.Schema.Mesh> meshes,
+                            List<glTFLoader.Schema.Node> nodes)
+        {
+            byte[] vertexBuffer;
+            byte[] normalBuffer;
+            byte[] indexBuffer;
+            byte[] colorBuffer;
+            byte[] uvBuffer;
+
+            double[] vmin; double[] vmax;
+            double[] nmin; double[] nmax;
+            float[] cmin; float[] cmax;
+            ushort imin; ushort imax;
+            double[] uvmin; double[] uvmax;
+
+            var box = Elements.Geometry.Mesh.Box(0.05);
+            box.GetBuffers(out vertexBuffer, out indexBuffer, out normalBuffer, out colorBuffer, out uvBuffer, out vmax, out vmin, out nmin, out nmax, out cmin, out cmax, out imin, out imax, out uvmin, out uvmax);
+            return gltf.AddTriangleMesh($"vertex_{id}", buffer, bufferViews, accessors, vertexBuffer, normalBuffer, indexBuffer, colorBuffer, uvBuffer, vmin, vmax, nmin, nmax, imin, imax, uvmin, uvmax, material, cmin, cmax, null, meshes);
         }
 
         /// <returns>Whether a Glb was successfully saved. False indicates that there was no geometry to save.</returns>
@@ -687,8 +757,8 @@ namespace Elements.Serialization.glTF
             var accessors = new List<Accessor>();
 
             var materialsToAdd = model.AllElementsOfType<Material>().ToList();
-            if(drawEdges)
-            {   
+            if (drawEdges)
+            {
                 materialsToAdd.Add(BuiltInMaterials.Edges);
             }
             var materials = gltf.AddMaterials(materialsToAdd, buffer, bufferViews);
@@ -918,7 +988,7 @@ namespace Elements.Serialization.glTF
                 meshElementMap[e.Id].Add(meshId);
 
                 var geom = (GeometricElement)e;
-                if(!geom.IsElementDefinition)
+                if (!geom.IsElementDefinition)
                 {
                     CreateNodeForMesh(gltf, meshId, nodes, geom.Transform);
                 }
@@ -1050,30 +1120,61 @@ namespace Elements.Serialization.glTF
                             bbox.Max.ToArray(), 0, (ushort)(vertices.Count - 1), material, MeshPrimitive.ModeEnum.POINTS, meshes, nodes, t);
         }
 
-        // private static void AddArrow(long id,
-        //                              Vector3 origin,
-        //                              Vector3 direction,
-        //                              Gltf gltf,
-        //                              int material,
-        //                              Transform t,
-        //                              List<byte> buffer,
-        //                              List<BufferView> bufferViews,
-        //                              List<Accessor> accessors)
-        // {
-        //     var scale = 0.5;
-        //     var end = origin + direction * scale;
-        //     var up = direction.IsParallelTo(Vector3.ZAxis) ? Vector3.YAxis : Vector3.ZAxis;
-        //     var tr = new Transform(Vector3.Origin, direction.Cross(up), direction);
-        //     tr.Rotate(up, -45.0);
-        //     var arrow1 = tr.OfPoint(Vector3.XAxis * 0.1);
-        //     var pts = new[] { origin, end, end + arrow1 };
-        //     var vBuff = pts.ToArray();
-        //     var vCount = 3;
-        //     var indices = Enumerable.Range(0, vCount).Select(i => (ushort)i).ToArray();
-        //     var bbox = new BBox3(pts);
-        //     gltf.AddLineLoop($"{id}_curve", buffer, bufferViews, accessors, vBuff, indices, bbox.Min.ToArray(),
-        //                     bbox.Max.ToArray(), 0, (ushort)(vCount - 1), material, MeshPrimitive.ModeEnum.LINE_STRIP, t);
+        private static void AddArrow(long id,
+                                     Vector3 origin,
+                                     Vector3 direction,
+                                     Gltf gltf,
+                                     int material,
+                                     Transform t,
+                                     List<byte> buffer,
+                                     List<BufferView> bufferViews,
+                                     List<Accessor> accessors,
+                                    List<glTFLoader.Schema.Mesh> meshes,
+                                    List<glTFLoader.Schema.Node> nodes)
+        {
+            var scale = 0.5;
+            var end = origin + direction * scale;
+            var up = direction.IsParallelTo(Vector3.ZAxis) ? Vector3.YAxis : Vector3.ZAxis;
+            var tr = new Transform(Vector3.Origin, direction.Cross(up), direction);
+            tr.Rotate(up, -45.0);
+            var arrow1 = tr.OfPoint(Vector3.XAxis * 0.1);
+            var vertices = new[] { origin, end, end + arrow1 };
 
-        // }
+            var floatSize = sizeof(float);
+            var ushortSize = sizeof(ushort);
+            var vBuff = new byte[vertices.Length * 3 * floatSize];
+            var indices = new byte[vertices.Length * ushortSize];
+
+            var vi = 0;
+            var ii = 0;
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                var v = vertices[i];
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.X), 0, vBuff, vi, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.Y), 0, vBuff, vi + floatSize, floatSize);
+                System.Buffer.BlockCopy(BitConverter.GetBytes((float)v.Z), 0, vBuff, vi + 2 * floatSize, floatSize);
+                vi += 3 * floatSize;
+
+                System.Buffer.BlockCopy(BitConverter.GetBytes((ushort)i), 0, indices, ii, ushortSize);
+                ii += ushortSize;
+            }
+            var bbox = new BBox3(vertices);
+            gltf.AddLineLoop($"{id}_curve",
+                             buffer,
+                             bufferViews,
+                             accessors,
+                             vBuff,
+                             indices,
+                             bbox.Min.ToArray(),
+                             bbox.Max.ToArray(),
+                             0,
+                             (ushort)(vertices.Length - 1),
+                             material,
+                             MeshPrimitive.ModeEnum.LINE_STRIP,
+                             meshes,
+                             nodes,
+                             t);
+
+        }
     }
 }
