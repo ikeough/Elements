@@ -1,8 +1,34 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Elements.Geometry.Solids
 {
+    internal class DistanceFromOriginComparer : IComparer<(Edge Edge, Vector3 Location, Vertex Vertex)>
+    {
+        private Vector3 _origin;
+        public DistanceFromOriginComparer(Vector3 origin)
+        {
+            this._origin = origin;
+        }
+
+        public int Compare((Edge Edge, Vector3 Location, Vertex Vertex) x, (Edge Edge, Vector3 Location, Vertex Vertex) y)
+        {
+            var a = x.Location.DistanceTo(_origin);
+            var b = y.Location.DistanceTo(_origin);
+
+            if (a < b)
+            {
+                return -1;
+            }
+            else if (a > b)
+            {
+                return 1;
+            }
+            return 0;
+        }
+    }
+
     /// <summary>
     /// A Solid Face.
     /// </summary>
@@ -11,17 +37,17 @@ namespace Elements.Geometry.Solids
         /// <summary>
         /// The Id of the Face.
         /// </summary>
-        public long Id{get;}
-        
+        public long Id { get; }
+
         /// <summary>
         /// A CCW wound list of Edges.
         /// </summary>
-        public Loop Outer { get; internal set;}
+        public Loop Outer { get; internal set; }
 
         /// <summary>
         /// A collection of CW wound Edges.
         /// </summary>
-        public Loop[] Inner { get; internal set;}
+        public Loop[] Inner { get; internal set; }
 
         /// <summary>
         /// Construct a Face.
@@ -35,23 +61,13 @@ namespace Elements.Geometry.Solids
             this.Outer = outer;
             outer.Face = this;
             this.Inner = inner;
-            if(this.Inner != null)
+            if (this.Inner != null)
             {
-                foreach(var loop in inner)
+                foreach (var loop in inner)
                 {
                     loop.Face = this;
                 }
             }
-        }
-
-        internal void Slice(Plane p, ref List<Vector3> inside, ref List<Vector3> outside)
-        {
-            var input = new List<Vector3>();
-            foreach(var he in Outer.Edges)
-            {
-                input.Add(he.Vertex.Point);
-            }
-            SutherlandHodgman(input, ref inside, ref outside, p);
         }
 
         /// <summary>
@@ -60,9 +76,23 @@ namespace Elements.Geometry.Solids
         public override string ToString()
         {
             var sb = new StringBuilder();
-            foreach(var he in this.Outer.Edges)
+            sb.AppendLine("Outer:");
+            foreach (var he in this.Outer.Edges)
             {
-                sb.AppendLine($"HalfEdge: {he.ToString()}");
+                sb.AppendLine($"\t{he}");
+            }
+
+            if (this.Inner != null)
+            {
+                sb.AppendLine("Inner:");
+                foreach (var loop in this.Inner)
+                {
+                    foreach (var he in loop.Edges)
+                    {
+                        sb.AppendLine($"\t{he}");
+                    }
+                    sb.AppendLine();
+                }
             }
             return sb.ToString();
         }
@@ -74,43 +104,43 @@ namespace Elements.Geometry.Solids
             outside = new List<Vector3>();
             inside = new List<Vector3>();
 
-            for(var j=0; j<input.Count; j++)
+            for (var j = 0; j < input.Count; j++)
             {
                 // edge of the triangle
                 var start = input[j];
-                var end = input[j == input.Count - 1 ? 0 : j+1];
+                var end = input[j == input.Count - 1 ? 0 : j + 1];
                 var d1 = p.Normal.Dot(start - p.Origin);
                 var d2 = p.Normal.Dot(end - p.Origin);
 
-                if(d1 < 0 && d2 < 0)
+                if (d1 < 0 && d2 < 0)
                 {
                     //both inside
                     inside.Add(start);
                 }
-                else if(d1 < 0 && d2 > 0)
+                else if (d1 < 0 && d2 > 0)
                 {
                     //start inside
                     //end outside
                     //add intersection
-                    if(new Line(start, end).Intersects(p, out Vector3 result))
+                    if (new Line(start, end).Intersects(p, out Vector3 result))
                     {
                         inside.Add(start);
                         inside.Add(result);
                         outside.Add(result);
                     }
-                    
+
                 }
-                else if(d1 > 0 && d2 > 0)
+                else if (d1 > 0 && d2 > 0)
                 {
                     //both outside
                     outside.Add(start);
                 }
-                else if(d1 > 0 && d2 < 0)
+                else if (d1 > 0 && d2 < 0)
                 {
                     //start outside
                     //end inside
                     //add intersection
-                    if(new Line(start, end).Intersects(p, out Vector3 result))
+                    if (new Line(start, end).Intersects(p, out Vector3 result))
                     {
                         inside.Add(result);
                         outside.Add(start);
