@@ -8,17 +8,17 @@ namespace Elements.Geometry.Solids
         /// <summary>
         /// The Id of the Edge.
         /// </summary>
-        public long Id{get;}
+        public long Id { get; }
 
         /// <summary>
         /// The Left edge.
         /// </summary>
-        public HalfEdge Left {get; internal set;}
+        public HalfEdge Left { get; internal set; }
 
         /// <summary>
         /// The Right edge.
         /// </summary>
-        public HalfEdge Right {get; internal set;}
+        public HalfEdge Right { get; internal set; }
 
         /// <summary>
         /// Construct an Edge
@@ -32,13 +32,22 @@ namespace Elements.Geometry.Solids
             this.Left = new HalfEdge(this, from);
             this.Right = new HalfEdge(this, to);
         }
-        
+
+        internal bool Intersects(Plane plane, out Vector3 result)
+        {
+            if (new Line(this.Left.Vertex.Point, this.Right.Vertex.Point).Intersects(plane, out result))
+            {
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Get the string representation of the Edge.
         /// </summary>
         public override string ToString()
         {
-            return $"Id: {this.Id}, From: {this.Left.Vertex}, To: {this.Right.Vertex}";
+            return $"{this.Id}: {this.Left.Vertex} -> {this.Right.Vertex}";
         }
 
         internal Edge(long id)
@@ -47,7 +56,7 @@ namespace Elements.Geometry.Solids
         }
 
         internal void Reverse()
-        {   
+        {
             // Reverse the half edges.
             Left.Vertex = Right.Vertex;
             Right.Vertex = Left.Vertex;
