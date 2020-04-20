@@ -51,7 +51,7 @@ namespace Elements.Geometry.Solids
         /// </summary>
         /// <param name="perimeter">The perimeter of the lamina's faces.</param>
         public static Solid CreateLamina(IList<Vector3> perimeter)
-        {   
+        {
             var solid = new Solid();
             var loop1 = new Loop();
             var loop2 = new Loop();
@@ -81,7 +81,7 @@ namespace Elements.Geometry.Solids
                                       IList<Polygon> holes,
                                       double distance,
                                       bool bothSides = false,
-                                      double rotation = 0.0) 
+                                      double rotation = 0.0)
         {
             return Solid.SweepFace(perimeter, holes, Vector3.ZAxis, distance, bothSides, rotation);
         }
@@ -104,10 +104,10 @@ namespace Elements.Geometry.Solids
             var solid = new Solid();
 
             var l = curve.Length();
-            
+
             // The start and end setbacks can't be more than
             // the length of the beam together.
-            if((startSetback + endSetback) >= l)
+            if ((startSetback + endSetback) >= l)
             {
                 startSetback = 0;
                 endSetback = 0;
@@ -129,7 +129,7 @@ namespace Elements.Geometry.Solids
                     solid.SweepPolygonBetweenPlanes(perimeter, transforms[i], next);
                 }
             }
-            else if(curve is Bezier)
+            else if (curve is Bezier)
             {
                 var startCap = solid.AddFace(transforms[0].OfPolygon(perimeter));
                 for (var i = 0; i < transforms.Length - 1; i++)
@@ -145,7 +145,7 @@ namespace Elements.Geometry.Solids
                 Face cap = null;
                 Edge[][] openEdges;
 
-                if(holes != null)
+                if (holes != null)
                 {
                     cap = solid.AddFace(transforms[0].OfPolygon(perimeter), transforms[0].OfPolygons(holes));
                     openEdges = new Edge[1 + holes.Count][];
@@ -161,15 +161,15 @@ namespace Elements.Geometry.Solids
                 openEdge = solid.SweepEdges(transforms, openEdge);
                 openEdges[0] = openEdge;
 
-                if(holes != null)
+                if (holes != null)
                 {
-                    for(var i=0; i<cap.Inner.Length; i++)
+                    for (var i = 0; i < cap.Inner.Length; i++)
                     {
                         openEdge = cap.Inner[i].GetLinkedEdges();
 
                         // last inner edge for one hole
                         openEdge = solid.SweepEdges(transforms, openEdge);
-                        openEdges[i+1] = openEdge;
+                        openEdges[i + 1] = openEdge;
                     }
                 }
 
@@ -205,13 +205,13 @@ namespace Elements.Geometry.Solids
             //     perimeter = newPerimeter[0];
             //     holes = newPerimeter.Skip(1).Take(newPerimeter.Count - 1).ToArray();
             // }
-            
+
             var solid = new Solid();
             Face fStart = null;
-            if(bothSides)
+            if (bothSides)
             {
-                var t = new Transform(direction.Negate()* (distance/2), rotation);
-                if(holes != null)
+                var t = new Transform(direction.Negate() * (distance / 2), rotation);
+                if (holes != null)
                 {
                     fStart = solid.AddFace(t.OfPolygon(perimeter.Reversed()), t.OfPolygons(holes.Reversed()));
                 }
@@ -222,7 +222,7 @@ namespace Elements.Geometry.Solids
             }
             else
             {
-                if(holes != null)
+                if (holes != null)
                 {
                     fStart = solid.AddFace(perimeter.Reversed(), holes.Reversed());
                 }
@@ -234,10 +234,10 @@ namespace Elements.Geometry.Solids
 
             var fEndOuter = solid.SweepLoop(fStart.Outer, direction, distance);
 
-            if(holes != null)
+            if (holes != null)
             {
                 var fEndInner = new Loop[holes.Count];
-                for(var i=0; i<holes.Count; i++)
+                for (var i = 0; i < holes.Count; i++)
                 {
                     fEndInner[i] = solid.SweepLoop(fStart.Inner[i], direction, distance);
                 }
@@ -275,15 +275,15 @@ namespace Elements.Geometry.Solids
             var outerLoop = LoopFromPolygon(outer);
             Loop[] innerLoops = null;
 
-            if(inner != null)
+            if (inner != null)
             {
                 innerLoops = new Loop[inner.Count];
-                for(var i=0; i<inner.Count; i++)
+                for (var i = 0; i < inner.Count; i++)
                 {
                     innerLoops[i] = LoopFromPolygon(inner[i]);
                 }
             }
-            
+
             var face = this.AddFace(outerLoop, innerLoops);
             return face;
         }
@@ -317,7 +317,7 @@ namespace Elements.Geometry.Solids
             _faceId++;
             return f;
         }
-        
+
         /// <summary>
         /// Creates a series of edges from a polygon.
         /// </summary>
@@ -330,45 +330,47 @@ namespace Elements.Geometry.Solids
             {
                 vertices[i] = AddVertex(p.Vertices[i]);
             }
-            for(var i=0; i< p.Vertices.Count; i++)
+            for (var i = 0; i < p.Vertices.Count; i++)
             {
-                loop[i] = AddEdge(vertices[i], i == p.Vertices.Count - 1 ? vertices[0] : vertices[i+1]);
+                loop[i] = AddEdge(vertices[i], i == p.Vertices.Count - 1 ? vertices[0] : vertices[i + 1]);
             }
             return loop;
         }
-        
+
         /// <summary>
         /// Slice a solid with the provided plane.
         /// </summary>
         /// <param name="p">The plane to be used to slice this solid.</param>
-        internal void Slice(Plane p)
-        {
-            var keys = new List<long>(this.Edges.Keys);
-            foreach(var key in keys)
-            {
-                var e = this.Edges[key];
-                SplitEdge(p, e);
-            }
-        }
+        // internal void Slice(Plane p)
+        // {
+        //     var keys = new List<long>(this.Edges.Keys);
+        //     foreach (var key in keys)
+        //     {
+        //         var e = this.Edges[key];
+        //         SplitEdge(p, e);
+        //     }
+        // }
 
         /// <summary>
         /// Get the string representation of the solid.
         /// </summary>
-        public override string ToString() 
+        public override string ToString()
         {
             var sb = new StringBuilder();
             sb.AppendLine($"Faces: {this.Faces.Count}, Edges: {this.Edges.Count}, Vertices: {this.Vertices.Count}");
-            foreach(var e in Edges)
+            sb.AppendLine("Edges:");
+            foreach (var e in Edges)
             {
-                sb.AppendLine($"Edge: {e.ToString()}");
+                sb.AppendLine($"\t{e.Value}");
             }
-            foreach(var f in Faces.Values)
+            sb.AppendLine("Faces:");
+            foreach (var f in Faces.Values)
             {
-                sb.AppendLine($"Face: {f.ToString()}");
+                sb.AppendLine($"\t{f}");
             }
             return sb.ToString();
         }
-        
+
         /// <summary>
         /// Triangulate this solid.
         /// </summary>
@@ -404,17 +406,106 @@ namespace Elements.Geometry.Solids
                     mesh.AddTriangle(v1, v2, v3);
                 }
             }
+            mesh.ComputeNormals();
         }
-        
+
+        public void Split(Plane plane)
+        {
+            foreach (var face in this.Faces)
+            {
+                Console.WriteLine($"Splitting face {face.Key}...");
+                SplitFace(face.Value, plane);
+            }
+            Console.WriteLine(this);
+        }
+
+        public List<Face> SplitFace(Face face, Plane plane)
+        {
+            var newFaces = new List<Face>();
+
+            Vector3 firstIntersection = default(Vector3);
+            bool intersectionStarted = false;
+
+            // Combine all the loops into one collection
+            // TODO: Remove the concept of outer and inner.
+            var loops = new List<Loop>();
+            loops.Add(face.Outer);
+            if (face.Inner != null)
+            {
+                loops.AddRange(face.Inner);
+            }
+
+            var splitLocations = new List<(Edge Edge, Vector3 Location, Vertex Vertex)>();
+            foreach (var loop in loops)
+            {
+                foreach (var he in loop.Edges)
+                {
+                    if (!he.Edge.Intersects(plane, out Vector3 result))
+                    {
+                        continue;
+                    }
+
+                    Vertex existingVertex = null;
+                    if (he.Edge.Left.Vertex.Point.IsAlmostEqualTo(result))
+                    {
+                        Console.WriteLine($"\tReusing vertex {he.Edge.Left.Vertex.Id}...");
+                        existingVertex = he.Edge.Left.Vertex;
+                    }
+                    else if (he.Edge.Right.Vertex.Point.IsAlmostEqualTo(result))
+                    {
+                        Console.WriteLine($"\tReusing vertex {he.Edge.Right.Vertex.Id}...");
+                        existingVertex = he.Edge.Right.Vertex;
+                    }
+                    if (existingVertex != null)
+                    {
+                        splitLocations.Add((he.Edge, result, existingVertex));
+                    }
+                    else
+                    {
+                        splitLocations.Add((he.Edge, result, null));
+                    }
+
+                    if (!intersectionStarted)
+                    {
+                        firstIntersection = result;
+                        intersectionStarted = true;
+                    }
+                }
+            }
+
+            // TODO: This is probably wrong because we need to sort 
+            // along the orthnormal of the split plane
+            splitLocations.Sort(new DistanceFromOriginComparer(firstIntersection));
+
+            var newEdges = new List<Edge>();
+            for (var i = 0; i < splitLocations.Count; i++)
+            {
+                var sl1 = splitLocations[i];
+                Edge newEdge1 = null;
+                var v1 = sl1.Vertex != null ? sl1.Vertex : SplitEdge(sl1.Edge, sl1.Location, out newEdge1);
+                if (sl1.Vertex == null)
+                {
+                    Console.WriteLine($"\t\tCreated new vertex {v1}.");
+                }
+                if (newEdge1 != null)
+                {
+                    Console.WriteLine($"\t\tCreated new edge {newEdge1}.");
+                }
+            }
+
+            return newFaces;
+        }
+
         /// <summary>
         /// Triangulate this solid and pack the triangulated data into buffers
         /// appropriate for use with gltf.
         /// </summary>
-        public void Tessellate(out byte[] vertexBuffer, 
+        public void Tessellate(out byte[] vertexBuffer,
             out byte[] indexBuffer, out byte[] normalBuffer, out byte[] colorBuffer, out byte[] uvBuffer,
-            out double[] vmax, out double[] vmin, out double[] nmin, out double[] nmax, 
-            out float[] cmin, out float[] cmax, out ushort imin, out ushort imax, out double[] uvmin, out double[] uvmax) {
-            
+            out double[] vmax, out double[] vmin, out double[] nmin, out double[] nmax,
+            out float[] cmin, out float[] cmax, out ushort imin, out ushort imax, out double[] uvmin, out double[] uvmax)
+        {
+
             var tessellations = new Tess[this.Faces.Count];
 
             var fi = 0;
@@ -441,8 +532,8 @@ namespace Elements.Geometry.Solids
             var floatSize = sizeof(float);
             var ushortSize = sizeof(ushort);
 
-            var vertexCount = tessellations.Sum(t=>t.VertexCount);
-            var indexCount = tessellations.Sum(t=>t.Elements.Length);
+            var vertexCount = tessellations.Sum(t => t.VertexCount);
+            var indexCount = tessellations.Sum(t => t.Elements.Length);
 
             vertexBuffer = new byte[vertexCount * floatSize * 3];
             normalBuffer = new byte[vertexCount * floatSize * 3];
@@ -452,7 +543,7 @@ namespace Elements.Geometry.Solids
             // Vertex colors are not used in this context currently.
             colorBuffer = new byte[0];
             cmin = new float[0];
-            cmax= new float[0];
+            cmax = new float[0];
 
             vmax = new double[3] { double.MinValue, double.MinValue, double.MinValue };
             vmin = new double[3] { double.MaxValue, double.MaxValue, double.MaxValue };
@@ -460,9 +551,9 @@ namespace Elements.Geometry.Solids
             nmax = new double[3] { double.MinValue, double.MinValue, double.MinValue };
 
             // TODO: Set this properly when solids get UV coordinates.
-            uvmin = new double[2] { 0,0 };
-            uvmax = new double[2] { 0,0 };
-            
+            uvmin = new double[2] { 0, 0 };
+            uvmax = new double[2] { 0, 0 };
+
             imax = ushort.MinValue;
             imin = ushort.MaxValue;
 
@@ -472,14 +563,14 @@ namespace Elements.Geometry.Solids
 
             var iCursor = 0;
 
-            for(var i=0; i<tessellations.Length; i++)
+            for (var i = 0; i < tessellations.Length; i++)
             {
                 var tess = tessellations[i];
 
                 var a = tess.Vertices[tess.Elements[0]].Position.ToVector3();
                 var b = tess.Vertices[tess.Elements[1]].Position.ToVector3();
                 var c = tess.Vertices[tess.Elements[2]].Position.ToVector3();
-                var n = (b-a).Cross(c-a).Unitized();
+                var n = (b - a).Cross(c - a).Unitized();
 
                 for (var j = 0; j < tess.Vertices.Length; j++)
                 {
@@ -527,10 +618,10 @@ namespace Elements.Geometry.Solids
                     System.Buffer.BlockCopy(BitConverter.GetBytes(index), 0, indexBuffer, ii, ushortSize);
                     imax = Math.Max(imax, index);
                     imin = Math.Min(imin, index);
-                    ii += ushortSize; 
+                    ii += ushortSize;
                 }
-                
-                iCursor = imax+1;
+
+                iCursor = imax + 1;
             }
         }
 
@@ -541,12 +632,12 @@ namespace Elements.Geometry.Solids
         /// </summary>
         /// <param name="edges"></param>
         /// <param name="reverse"></param>
-        protected void Cap(Edge[][] edges,  bool reverse = true)
+        protected void Cap(Edge[][] edges, bool reverse = true)
         {
             var loop = new Loop();
-            for(var i=0; i<edges[0].Length; i++)
+            for (var i = 0; i < edges[0].Length; i++)
             {
-                if(reverse)
+                if (reverse)
                 {
                     loop.AddEdgeToStart(edges[0][i].Right);
                 }
@@ -557,24 +648,24 @@ namespace Elements.Geometry.Solids
             }
 
             var inner = new Loop[edges.Length - 1];
-            for(var i=1; i<edges.Length; i++)
+            for (var i = 1; i < edges.Length; i++)
             {
-                inner[i-1] = new Loop();
-                for(var j=0; j<edges[i].Length; j++)
+                inner[i - 1] = new Loop();
+                for (var j = 0; j < edges[i].Length; j++)
                 {
-                    if(reverse)
+                    if (reverse)
                     {
-                        inner[i-1].AddEdgeToStart(edges[i][j].Right);
+                        inner[i - 1].AddEdgeToStart(edges[i][j].Right);
                     }
                     else
                     {
-                        inner[i-1].AddEdgeToEnd(edges[i][j].Left);
+                        inner[i - 1].AddEdgeToEnd(edges[i][j].Left);
                     }
                 }
             }
             AddFace(loop, inner);
         }
-    
+
         protected Loop LoopFromPolygon(Polygon p)
         {
             var loop = new Loop();
@@ -583,10 +674,10 @@ namespace Elements.Geometry.Solids
             {
                 verts[i] = AddVertex(p.Vertices[i]);
             }
-            for (var i=0; i<p.Vertices.Count; i++)
+            for (var i = 0; i < p.Vertices.Count; i++)
             {
                 var v1 = verts[i];
-                var v2 = i == verts.Length - 1 ? verts[0] : verts[i+1];
+                var v2 = i == verts.Length - 1 ? verts[0] : verts[i + 1];
                 var edge = AddEdge(v1, v2);
                 loop.AddEdgeToEnd(edge.Left);
             }
@@ -613,7 +704,7 @@ namespace Elements.Geometry.Solids
             this.Edges.Add(id, e);
             return e;
         }
-    
+
         internal Edge[] SweepEdges(Transform[] transforms, Edge[] openEdge)
         {
             for (var i = 0; i < transforms.Length - 1; i++)
@@ -627,8 +718,8 @@ namespace Elements.Geometry.Solids
         internal Loop SweepLoop(Loop loop, Vector3 direction, double distance)
         {
             var sweepEdges = new Edge[loop.Edges.Count];
-            var i=0;
-            foreach(var e in loop.Edges)
+            var i = 0;
+            foreach (var e in loop.Edges)
             {
                 var v1 = e.Vertex;
                 var v2 = AddVertex(v1.Point + direction * distance);
@@ -637,14 +728,14 @@ namespace Elements.Geometry.Solids
             }
 
             var openLoop = new Loop();
-            var j=0;
-            foreach(var e in loop.Edges)
+            var j = 0;
+            foreach (var e in loop.Edges)
             {
                 var a = e.Edge;
                 var b = sweepEdges[j];
-                var d = sweepEdges[j == loop.Edges.Count - 1 ? 0 : j+1];
+                var d = sweepEdges[j == loop.Edges.Count - 1 ? 0 : j + 1];
                 var c = AddEdge(b.Right.Vertex, d.Right.Vertex);
-                var faceLoop = new Loop(new[]{a.Right, b.Left, c.Left, d.Right});
+                var faceLoop = new Loop(new[] { a.Right, b.Left, c.Left, d.Right });
                 AddFace(faceLoop);
                 openLoop.AddEdgeToStart(c.Right);
                 j++;
@@ -655,12 +746,12 @@ namespace Elements.Geometry.Solids
         private Edge[] ProjectEdgeAlong(Edge[] loop, Vector3 v, Plane p)
         {
             var edges = new Edge[loop.Length];
-            for(var i=0; i<edges.Length; i++)
+            for (var i = 0; i < edges.Length; i++)
             {
                 var e = loop[i];
                 var a = AddVertex(e.Left.Vertex.Point.ProjectAlong(v, p));
                 var b = AddVertex(e.Right.Vertex.Point.ProjectAlong(v, p));
-                edges[i] = AddEdge(a,b);
+                edges[i] = AddEdge(a, b);
             }
             return edges;
         }
@@ -679,14 +770,14 @@ namespace Elements.Geometry.Solids
             }
 
             var openEdge = new Edge[sweepEdges.Length];
-            for(var i=0; i<sweepEdges.Length; i++)
+            for (var i = 0; i < sweepEdges.Length; i++)
             {
                 var a = loop1[i];
                 var b = sweepEdges[i];
                 var c = loop2[i];
-                var d = sweepEdges[i == loop1.Length - 1 ? 0 : i+1];
-                
-                var loop = new Loop(new[]{a.Right, b.Left, c.Left, d.Right});
+                var d = sweepEdges[i == loop1.Length - 1 ? 0 : i + 1];
+
+                var loop = new Loop(new[] { a.Right, b.Left, c.Left, d.Right });
                 AddFace(loop);
                 openEdge[i] = c;
             }
@@ -715,45 +806,68 @@ namespace Elements.Geometry.Solids
             }
 
             var openEdge = new Loop();
-            for(var i=0; i<sweepEdges.Length; i++)
+            for (var i = 0; i < sweepEdges.Length; i++)
             {
                 var a = loop1[i];
                 var b = sweepEdges[i];
                 var c = loop2[i];
-                var d = sweepEdges[i == loop1.Length - 1 ? 0 : i+1];
-                
-                var loop = new Loop(new[]{a.Right, b.Left, c.Left, d.Right});
+                var d = sweepEdges[i == loop1.Length - 1 ? 0 : i + 1];
+
+                var loop = new Loop(new[] { a.Right, b.Left, c.Left, d.Right });
                 AddFace(loop);
                 openEdge.AddEdgeToEnd(c.Right);
             }
             return openEdge;
         }
-    
-        private void SplitEdge(Plane p, Edge e)
+
+
+        /// <summary>
+        /// Splitting a loop results in two loops.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        private void SplitFace(Vertex a, Vertex b)
         {
-            var start = e.Left.Vertex;
-            var end = e.Right.Vertex;
-            if(!new Line(start.Point, end.Point).Intersects(p, out Vector3 result))
-            {
-                return;
-            }
+            // var e = AddEdge(a, b);
+            // // Add the left side to the existing loop
+            // // Create a new loop
+            // // Add the right side to the new loop.
+            // var f = AddFace(newLoop);
+        }
+
+        /// <summary>
+        /// Joining a loop results in the loss of one loop.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        private void JoinLoop(Vertex a, Vertex b)
+        {
+
+        }
+
+        private Vertex SplitEdge(Edge edge, Vector3 location, out Edge newEdge)
+        {
+            var start = edge.Left.Vertex;
+            var end = edge.Right.Vertex;
 
             // Add vertex at intersection.
             // Create new edge from vertex to end.
-            var mid = AddVertex(result);
-            var e1 = AddEdge(mid, end);
+            var split = AddVertex(location);
+            newEdge = AddEdge(split, end);
 
             // Adjust end of existing edge to
             // new vertex
-            e.Right.Vertex = mid;
-            if(e.Left.Loop != null)
+            edge.Right.Vertex = split;
+            if (edge.Left.Loop != null)
             {
-                e.Left.Loop.InsertEdgeAfter(e.Left, e1.Left);
+                edge.Left.Loop.InsertEdgeAfter(edge.Left, newEdge.Left);
             }
-            if(e.Right.Loop != null)
+            if (edge.Right.Loop != null)
             {
-                e.Right.Loop.InsertEdgeBefore(e.Right, e1.Right);
+                edge.Right.Loop.InsertEdgeBefore(edge.Right, newEdge.Right);
             }
+
+            return split;
         }
     }
 }
