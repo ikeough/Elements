@@ -461,6 +461,36 @@ Triangles:{_triangles.Count}";
             return v;
         }
 
+        /// <summary>
+        /// Create a mesh box.
+        /// </summary>
+        /// <param name="size">The size in all dimensions of the box.</param>
+        public static Mesh Box(double size)
+        {
+            var mesh = new Mesh();
+            var v1 = mesh.AddVertex(new Vector3(size / 2, size / 2, -size / 2));
+            var v2 = mesh.AddVertex(new Vector3(-size / 2, size / 2, -size / 2));
+            var v3 = mesh.AddVertex(new Vector3(-size / 2, -size / 2, -size / 2));
+            var v4 = mesh.AddVertex(new Vector3(size / 2, -size / 2, -size / 2));
+            var v5 = mesh.AddVertex(new Vector3(size / 2, size / 2, size / 2));
+            var v6 = mesh.AddVertex(new Vector3(-size / 2, size / 2, size / 2));
+            var v7 = mesh.AddVertex(new Vector3(-size / 2, -size / 2, size / 2));
+            var v8 = mesh.AddVertex(new Vector3(size / 2, -size / 2, size / 2));
+            var t1 = mesh.AddTriangle(v1, v6, v5);
+            var t2 = mesh.AddTriangle(v1, v2, v6);
+            var t3 = mesh.AddTriangle(v2, v7, v6);
+            var t4 = mesh.AddTriangle(v2, v3, v7);
+            var t5 = mesh.AddTriangle(v3, v8, v7);
+            var t6 = mesh.AddTriangle(v3, v4, v8);
+            var t7 = mesh.AddTriangle(v4, v5, v8);
+            var t8 = mesh.AddTriangle(v4, v1, v5);
+            var t9 = mesh.AddTriangle(v1, v4, v3);
+            var t10 = mesh.AddTriangle(v1, v3, v2);
+            var t11 = mesh.AddTriangle(v5, v6, v7);
+            var t12 = mesh.AddTriangle(v5, v7, v8);
+            mesh.ComputeNormals();
+            return mesh;
+        }
         internal void AddMesh(Mesh mesh)
         {
             for (var i = 0; i < mesh.Vertices.Count; i++)
