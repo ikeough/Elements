@@ -57,6 +57,7 @@ namespace Elements.Tests
             t2.Move(1.5, 0);
             var solid = Solid.SweepFace(rectangle, new[] { t1.OfPolygon(hole), t2.OfPolygon(hole) }, Vector3.ZAxis, 2.0);
             solid.Split(new Plane(Vector3.Origin, Vector3.YAxis));
+            solid.Split(new Plane(new Vector3(0, 0, 1.5), Vector3.ZAxis));
             solid.ToGlb("models/SplitSolid.glb");
         }
 
