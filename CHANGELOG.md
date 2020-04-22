@@ -2,17 +2,23 @@
 
 ## 0.7.0
 ### Fixed
-- #271
-- #284
-- #285
-- #265
-- #221
+- [#271](https://github.com/hypar-io/Elements/issues/271)
+- [#284](https://github.com/hypar-io/Elements/issues/284)
+- [#285](https://github.com/hypar-io/Elements/issues/285)
+- [#265](https://github.com/hypar-io/Elements/issues/265)
+- [#221](https://github.com/hypar-io/Elements/issues/221)
+- [#229](https://github.com/hypar-io/Elements/issues/229)
+- [#189](https://github.com/hypar-io/Elements/issues/189)
 
 ### Added
 - `Curve.ToPolyline(int divisions = 10)`
 - `Circle.ToPolygon(int divisions = 10)`
 - `Transform.Move(double x, double y, double z)`
 - `Transform.Rotate(double angle)`
+- `TypeGenerator.GenerateUserElementTypesFromUrisAsync(string[] uris, string outputBaseDir, bool isUserElement = false)`
+
+## Changed
+- Updated documentation to reflect the use of .NET Core 3.1.
 
 ### Deprecated
 - `Polygon.Circle(...)`
