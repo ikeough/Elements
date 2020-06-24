@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>NOTE: Hypar for Revit is currently in beta. Do not use Hypar for Revit for production work. | Hypar Docs </title>
+    <meta name="viewport" content="width=device-width">
+    <meta name="title" content="NOTE: Hypar for Revit is currently in beta. Do not use Hypar for Revit for production work. | Hypar Docs ">
+    <meta name="generator" content="docfx 2.48.1.0">
+    
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles/docfx.vendor.css">
+    <link rel="stylesheet" href="styles/docfx.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/vs2015.css">
+    <meta property="docfx:navrel" content="toc.html">
+    <meta property="docfx:tocrel" content="toc.html">
+    
+    <meta property="docfx:rel" content="">
+    
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+        
+        <nav id="autocollapse" class="navbar navbar-inverse ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <!--<a class="navbar-brand" href="index.html">
+          <img id="logo" class="svg" src="logo.svg" alt="" >
+        </a>
+        -->
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+            </div>
+          </div>
+        </nav>
+      </header>
+      <div class="container body-content">
+        
+        <div id="search-results">
+          <div class="search-list"></div>
+          <div class="sr-items">
+            <p><i class="glyphicon glyphicon-refresh index-loading"></i></p>
+          </div>
+          <ul id="pagination"></ul>
+        </div>
+      </div>
+      <div role="main" class="container body-content hide-when-search">
+        <div class="article row grid">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="">
+<h1 id="note-hypar-for-revit-is-currently-in-beta-do-not-use-hypar-for-revit-for-production-work"><strong>NOTE: Hypar for Revit is currently in beta. Do not use Hypar for Revit for production work.</strong></h1>
+
+<h1 id="getting-started-with-hypar-for-revit">Getting Started with Hypar for Revit</h1>
+<p>Hypar for Revit is a Revit addin that connects Revit to the Hypar Hub. Hub workflows will be temporarily visualized in the active 3D view of your Revit document.</p>
+<h2 id="installation">Installation</h2>
+<ul>
+<li><a href="https://hypar-io.github.io/Elements/C-Sharp.html#installing-and-using-the-hypar-cli">Install the latest Hypar CLI</a>. You'll need this to use the <code>hub</code> command.</li>
+<li>Download the latest zip from the <a href="https://github.com/hypar-io/Elements/releases">releases page</a>.</li>
+<li>Unzip the addin to a location on your hard drive.</li>
+<li>Place the <code>Hypar.Revit.addin</code> file from the zip in <code>C:\ProgramData\Autodesk\Revit\Addins\2020</code> (change the Revit version as appropriate).</li>
+<li>Ensure that the <code>Hypar.Revit.Addin</code> points to the correct path of the <code>Hypar.Revit.dll</code>.
+<ul>
+<li>For example, if you unzipped the zip into <code>C:/Users/Ian/Documents/Hypar.Revit</code>, then all references to <code>Hypar.Revit.dll</code> will need to be updated as follows:</li>
+</ul>
+<pre><code class="lang-xml">...
+&lt;AddIn Type=&quot;Application&quot;&gt;
+  &lt;Name&gt;HyparRevit&lt;/Name&gt;
+  &lt;FullClassName&gt;Hypar.Revit.HyparHubApp&lt;/FullClassName&gt;
+  &lt;Description&gt;&quot;Sync with a Hypar workflow.&quot;&lt;/Description&gt;
+  &lt;Assembly&gt;C:/Users/Ian/Documents/Hypar.Revit/Hypar.Revit.dll&lt;/Assembly&gt;
+  &lt;AddInId&gt;502fe383-2648-4e98-adf8-5e6047f9dc34&lt;/AddInId&gt;
+  &lt;VendorDescription&gt;&quot;Hypar Inc., hypar.io&quot;&lt;/VendorDescription&gt;
+  &lt;VendorId&gt;HYPR&lt;/VendorId&gt;
+&lt;/AddIn&gt;
+...
+</code></pre>
+</li>
+</ul>
+<h2 id="running">Running</h2>
+<ul>
+<li><p>Start the hub. From the command line do <code>hypar hub</code>.</p>
+</li>
+<li><p>Open Revit. If your addin is installed correctly, two new commands will appear in the External Tools button on the Revit Ribbon.</p>
+<p><img src="./images/RevitExternalCommands.png" alt=""></p>
+</li>
+<li><p>Clicking on Hypar Hub Start will start visualization the hub in your current active 3D view.</p>
+</li>
+<li><p>Clicking on Hypar Hub Stop will stop syncing with the hub.</p>
+</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li>The Hypar Revit log is available at `C:/Users/{you}/./hypar/hypar-revit.log. If you run into problems, you can send that log to support@hypar.io.</li>
+</ul>
+<h2 id="known-limitations">Known Limitations</h2>
+<ul>
+<li>When the hub is first started, you will not see any visualizations until you zoom, pan, or rotate. This is a limitation of Revit's <code>RefreshActiveView</code> API which does not work as advertised.</li>
+<li>The visualization only works in <code>Shaded</code> mode in Revit. In other modes, the visualization will be all black.</li>
+</ul>
+</article>
+          </div>
+          
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+              <!-- <p><a class="back-to-top" href="#top">Back to top</a><p> -->
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script type="text/javascript" src="styles/docfx.vendor.js"></script>
+    <script type="text/javascript" src="styles/docfx.js"></script>
+    <script type="text/javascript" src="styles/main.js"></script>
+  </body>
+</html>
