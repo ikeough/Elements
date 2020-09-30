@@ -492,6 +492,19 @@ namespace Elements.Geometry
         {
             return (b.X - a.X) * (c.Y - a.Y) - (c.X - a.X) * (b.Y - a.Y);
         }
+
+        /// <summary>
+        /// Implicitly convert an array of numbers to a vector3.
+        /// </summary>
+        /// <param name="arr">An array containing three numbers.</param>
+        public static implicit operator Vector3(double[] arr)
+        {
+            if (arr.Length < 3)
+            {
+                throw new ArgumentException("Conversion of an array to a vector3 could not continue. The array must have 3 numbers.");
+            }
+            return new Vector3(arr[0], arr[1], arr[2]);
+        }
     }
 
     /// <summary>
