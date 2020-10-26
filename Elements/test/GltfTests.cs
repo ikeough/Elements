@@ -110,7 +110,8 @@ namespace Elements.Tests
 
             var nodeList = ours.Nodes.ToList();
             var transform = new Transform(new Vector3(.1, .1, 0), Vector3.XAxis, Vector3.YAxis.Negate()).Scaled(0.01);
-            GltfExtensions.CreateNodeForMesh(ours, ours.Meshes.Length - 1, nodeList, transform);
+            var parentId = GltfExtensions.CreateNodeForTransform(ours, transform, nodeList);
+            GltfExtensions.CreateNodeForMesh(ours, ours.Meshes.Length - 1, parentId, nodeList);
             ours.Nodes = nodeList.ToArray();
 
             var savepath = "../../../GltfTestResult.gltf";
