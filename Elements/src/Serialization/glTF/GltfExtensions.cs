@@ -439,28 +439,8 @@ namespace Elements.Serialization.glTF
             return meshes.Count - 1;
         }
 
-        internal static int CreateNodeForMesh(Gltf gltf, int meshId, List<glTFLoader.Schema.Node> nodes, Transform transform = null)
+        internal static int CreateNodeForMesh(Gltf gltf, int meshId, int parentId, List<glTFLoader.Schema.Node> nodes)
         {
-            var parentId = 0;
-
-            if (transform != null)
-            {
-                var a = transform.XAxis;
-                var b = transform.YAxis;
-                var c = transform.ZAxis;
-
-                var transNode = new Node();
-
-                transNode.Matrix = new[]{
-                    (float)a.X, (float)a.Y, (float)a.Z, 0.0f,
-                    (float)b.X, (float)b.Y, (float)b.Z, 0.0f,
-                    (float)c.X, (float)c.Y, (float)c.Z, 0.0f,
-                    (float)transform.Origin.X,(float)transform.Origin.Y,(float)transform.Origin.Z, 1.0f
-                };
-
-                parentId = gltf.AddNode(nodes, transNode, 0);
-            }
-
             // Add mesh node to gltf
             var node = new Node();
             node.Mesh = meshId;
@@ -607,7 +587,8 @@ namespace Elements.Serialization.glTF
                                         indexBuffer, colorBuffer, uvBuffer, vmin, vmax, nmin, nmax,
                                         imin, imax, uvmin, uvmax, materials[BuiltInMaterials.Default.Name], cmin, cmax, null, meshes);
 
-            CreateNodeForMesh(gltf, meshId, nodes, null);
+            var parentId = CreateNodeForTransform(gltf, new Transform(), nodes);
+            CreateNodeForMesh(gltf, meshId, parentId, nodes);
 
             var edgeCount = 0;
             var vertices = new List<Vector3>();
@@ -760,6 +741,8 @@ namespace Elements.Serialization.glTF
             var materials = gltf.Materials != null ? gltf.Materials.ToList() : new List<glTFLoader.Schema.Material>();
 
             var meshElementMap = new Dictionary<Guid, List<int>>();
+            var nodeElementMap = new Dictionary<int, Guid>();
+
             var meshTransformMap = new Dictionary<Guid, Transform>();
             foreach (var e in elements)
             {
@@ -789,7 +772,8 @@ namespace Elements.Serialization.glTF
                                         meshElementMap,
                                         meshTransformMap,
                                         currLines,
-                                        drawEdges);
+                                        drawEdges,
+                                        nodeElementMap);
             }
             if (allBuffers.Sum(b => b.Count()) + buffers.Count == 0 && lights.Count == 0)
             {
@@ -856,92 +840,11 @@ namespace Elements.Serialization.glTF
                                                     Dictionary<Guid, List<int>> meshElementMap,
                                                     Dictionary<Guid, Transform> meshTransformMap,
                                                     List<Vector3> lines,
-                                                    bool drawEdges)
+                                                    bool drawEdges,
+                                                    Dictionary<int, Guid> nodeElementMap)
         {
             var materialName = BuiltInMaterials.Default.Name;
             int meshId = -1;
-
-            if (e is GeometricElement)
-            {
-                if (typeof(ContentElement).IsAssignableFrom(e.GetType()))
-                {
-                    var content = e as ContentElement;
-                    if (File.Exists(content.GltfLocation))
-                    {
-                        var meshIndices = GltfMergingUtils.AddAllMeshesFromFromGlb(content.GltfLocation,
-                                                                schemaBuffers,
-                                                                allBuffers,
-                                                                bufferViews,
-                                                                accessors,
-                                                                meshes,
-                                                                materials,
-                                                                textures,
-                                                                images,
-                                                                samplers
-                                                                );
-
-
-                        if (!meshElementMap.ContainsKey(e.Id))
-                        {
-                            meshElementMap.Add(e.Id, meshIndices);
-                        }
-                        if (!content.IsElementDefinition)
-                        {
-                            // This element is not used for instancing.
-                            // apply scale transform here to bring the content glb into meters
-                            var transform = content.Transform.Scaled(content.GltfScaleToMeters);
-                            CreateNodeForMesh(gltf, meshId, nodes, transform);
-                        }
-                        else
-                        {
-                            // This element will be used for instancing.  Save the transform of the
-                            // content element base that will be needed when instances are placed.
-                            // The scaled transform is only necessary because we are using the glb.
-                            if (!meshTransformMap.ContainsKey(e.Id))
-                            {
-                                meshTransformMap[e.Id] = content.Transform.Scaled(content.GltfScaleToMeters);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ProcessGeometricRepresentation(e,
-                                                       ref gltf,
-                                                       ref materialIndexMap,
-                                                       ref buffers,
-                                                       bufferViews,
-                                                       accessors,
-                                                       meshes,
-                                                       nodes,
-                                                       meshElementMap,
-                                                       lines,
-                                                       drawEdges,
-                                                       materialName,
-                                                       ref meshId,
-                                                       content);
-                    }
-                }
-                else
-                {
-                    var geometricElement = (GeometricElement)e;
-                    materialName = geometricElement.Material.Name;
-
-                    ProcessGeometricRepresentation(e,
-                                                   ref gltf,
-                                                   ref materialIndexMap,
-                                                   ref buffers,
-                                                   bufferViews,
-                                                   accessors,
-                                                   meshes,
-                                                   nodes,
-                                                   meshElementMap,
-                                                   lines,
-                                                   drawEdges,
-                                                   materialName,
-                                                   ref meshId,
-                                                   geometricElement);
-                }
-            }
 
             if (e is ElementInstance)
             {
@@ -978,12 +881,15 @@ namespace Elements.Serialization.glTF
                         }
                     }
                 }
+
+                return;
             }
 
             if (e is ModelCurve)
             {
                 var mc = (ModelCurve)e;
                 AddLines(GetNextId(), mc.Curve.RenderVertices(), gltf, materialIndexMap[mc.Material.Name], buffers, bufferViews, accessors, meshes, nodes, true, mc.Transform);
+                return;
             }
 
             if (e is ModelPoints)
@@ -993,6 +899,7 @@ namespace Elements.Serialization.glTF
                 {
                     AddPoints(GetNextId(), mp.Locations, gltf, materialIndexMap[mp.Material.Name], buffers, bufferViews, accessors, meshes, nodes, mp.Transform);
                 }
+                return;
             }
 
             if (e is ITessellate)
@@ -1067,9 +974,115 @@ namespace Elements.Serialization.glTF
                 var geom = (GeometricElement)e;
                 if (!geom.IsElementDefinition)
                 {
-                    CreateNodeForMesh(gltf, meshId, nodes, geom.Transform);
+                    var parentId = CreateNodeForTransform(gltf, geom.Transform, nodes);
+                    CreateNodeForMesh(gltf, meshId, parentId, nodes);
+                }
+                return;
+            }
+
+            if (e is GeometricElement)
+            {
+                var parentId = CreateNodeForTransform(gltf, ((GeometricElement)e).Transform, nodes);
+
+                if (typeof(ContentElement).IsAssignableFrom(e.GetType()))
+                {
+                    var content = e as ContentElement;
+                    if (File.Exists(content.GltfLocation))
+                    {
+                        var meshIndices = GltfMergingUtils.AddAllMeshesFromFromGlb(content.GltfLocation,
+                                                                schemaBuffers,
+                                                                allBuffers,
+                                                                bufferViews,
+                                                                accessors,
+                                                                meshes,
+                                                                materials,
+                                                                textures,
+                                                                images,
+                                                                samplers
+                                                                );
+
+
+                        if (!meshElementMap.ContainsKey(e.Id))
+                        {
+                            meshElementMap.Add(e.Id, meshIndices);
+                        }
+                        if (!content.IsElementDefinition)
+                        {
+                            // This element is not used for instancing.
+                            // apply scale transform here to bring the content glb into meters
+                            var transform = content.Transform.Scaled(content.GltfScaleToMeters);
+                            CreateNodeForMesh(gltf, meshId, parentId, nodes);
+                        }
+                        else
+                        {
+                            // This element will be used for instancing.  Save the transform of the
+                            // content element base that will be needed when instances are placed.
+                            // The scaled transform is only necessary because we are using the glb.
+                            if (!meshTransformMap.ContainsKey(e.Id))
+                            {
+                                meshTransformMap[e.Id] = content.Transform.Scaled(content.GltfScaleToMeters);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ProcessGeometricRepresentation(e,
+                                                       ref gltf,
+                                                       ref materialIndexMap,
+                                                       ref buffers,
+                                                       bufferViews,
+                                                       accessors,
+                                                       meshes,
+                                                       nodes,
+                                                       meshElementMap,
+                                                       lines,
+                                                       drawEdges,
+                                                       materialName,
+                                                       ref meshId,
+                                                       content,
+                                                       parentId);
+                    }
+                }
+                else
+                {
+                    var geometricElement = (GeometricElement)e;
+                    materialName = geometricElement.Material.Name;
+
+                    ProcessGeometricRepresentation(e,
+                                                   ref gltf,
+                                                   ref materialIndexMap,
+                                                   ref buffers,
+                                                   bufferViews,
+                                                   accessors,
+                                                   meshes,
+                                                   nodes,
+                                                   meshElementMap,
+                                                   lines,
+                                                   drawEdges,
+                                                   materialName,
+                                                   ref meshId,
+                                                   geometricElement,
+                                                   parentId);
                 }
             }
+        }
+
+        internal static int CreateNodeForTransform(Gltf gltf, Transform transform, List<Node> nodes)
+        {
+            var a = transform.XAxis;
+            var b = transform.YAxis;
+            var c = transform.ZAxis;
+
+            var transNode = new Node();
+
+            transNode.Matrix = new[]{
+                (float)a.X, (float)a.Y, (float)a.Z, 0.0f,
+                (float)b.X, (float)b.Y, (float)b.Z, 0.0f,
+                (float)c.X, (float)c.Y, (float)c.Z, 0.0f,
+                (float)transform.Origin.X,(float)transform.Origin.Y,(float)transform.Origin.Z, 1.0f
+            };
+
+            return gltf.AddNode(nodes, transNode, 0);
         }
 
         private static void ProcessGeometricRepresentation(Element e,
@@ -1085,7 +1098,8 @@ namespace Elements.Serialization.glTF
                                                            bool drawEdges,
                                                            string materialName,
                                                            ref int meshId,
-                                                           GeometricElement geometricElement)
+                                                           GeometricElement geometricElement,
+                                                           int parentId)
         {
             geometricElement.UpdateRepresentations();
 
@@ -1127,7 +1141,7 @@ namespace Elements.Serialization.glTF
 
                 if (!geometricElement.IsElementDefinition)
                 {
-                    CreateNodeForMesh(gltf, meshId, nodes, geometricElement.Transform);
+                    CreateNodeForMesh(gltf, meshId, parentId, nodes);
                 }
             }
         }
