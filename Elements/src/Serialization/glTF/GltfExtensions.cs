@@ -277,9 +277,46 @@ namespace Elements.Serialization.glTF
             }
         }
 
-        internal static void AddAnimations(this Gltf gltf, List<Element> elements, Dictionary<Guid, int> elementNodeMap)
+        internal static void AddAnimations(this Gltf gltf, List<Element> elements, Dictionary<Guid, int> elementNodeMap, List<byte> buffer, List<BufferView> bufferViews, List<Accessor> accesors)
         {
+            var groups = elements.Where(e => e.AssemblyInstruction != null).GroupBy(e => e.AssemblyInstruction.Order);
+            var animations = new List<Animation>();
+            // Create a buffer view representing all the animation input and output data.
+            // Create a buffer including all the input data.
+            // Create a buffer including all the output data.
+            // Create accessors which grab the input and output data.
+            var inputBuffer = new List<byte>();
+            var outputBuffer = new List<byte>();
 
+            var time = 0;
+            foreach (var group in groups)
+            {
+                var bufferViewId = AddBufferView(bufferViews, 0,  )
+                var timeMin = time;
+                var timeMax = time + 2.0f;
+                Vector3 transformMin = new Vector3();
+                Vector3 transformMax = new Vector3();
+
+                var inputAccessorId = AddAccessor(accesors, bufferViewId, 0, Accessor.ComponentTypeEnum.FLOAT, 10, new float[] { timeMin }, new float[] { timeMax }, Accessor.TypeEnum.SCALAR);
+                var outputAccesorId = AddAccessor(accesors, bufferViewId, 10, Accessor.ComponentTypeEnum.FLOAT, 10, transformMin, transformMax, Accessor.TypeEnum.VEC3);
+
+                var animation = new Animation();
+                animation.Samplers = new AnimationSampler[] {
+                    new AnimationSampler() {
+                        Input = inputAccessorId,
+                        Output = outputAccesorId,
+                        Interpolation = AnimationSampler.InterpolationEnum.LINEAR
+                    }
+                };
+                animation.Channels = new AnimationChannel[]{
+                    new AnimationChannel() {
+                        Sampler = samplerId,
+                        Target = new AnimationChannelTarget() {
+                            Node = elementNodeMap[group]
+                        }
+                    }
+                }
+            }
         }
 
         private static int AddAccessor(List<Accessor> accessors, int bufferView, int byteOffset, Accessor.ComponentTypeEnum componentType, int count, float[] min, float[] max, Accessor.TypeEnum accessorType)
@@ -875,6 +912,7 @@ namespace Elements.Serialization.glTF
             }
 
             var parentId = CreateNodeForTransform(gltf, ((GeometricElement)e).Transform, nodes);
+            nodeElementMap.Add(e.Id, parentId);
 
             if (e is ModelCurve)
             {

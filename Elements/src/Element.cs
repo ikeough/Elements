@@ -1,5 +1,6 @@
 #pragma warning disable CS1591
 
+using Elements.Instructions;
 using Elements.Serialization.JSON;
 
 namespace Elements
@@ -16,5 +17,9 @@ namespace Elements
     [JsonInheritanceAttribute("Elements.DirectionalLight", typeof(Elements.DirectionalLight))]
     public abstract partial class Element
     {
+        /// <summary>
+        /// The assembly instruction for the element.
+        /// </summary>
+        public AssemblyInstruction AssemblyInstruction { get; set; }
     }
 }
